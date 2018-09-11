@@ -6,8 +6,10 @@ OBJCOPY := i386-elf-objcopy
 
 CFLAGS := -march=i386 -ffreestanding -Os -Iinclude -Wall
 
+BUILD_DIR := build
+
 BOOT_OBJS := bootblock.o
-BOOTBLOCK := bootblock
+BOOTBLOCK := $(BUILD_DIR)/bootblock
 
 KERNEL_OBJS := \
 	start.o \
@@ -15,27 +17,26 @@ KERNEL_OBJS := \
 	console.o \
 	string.o \
 
-KERNEL := kernel
+KERNEL := $(BUILD_DIR)/kernel
 
-IMAGE := image
+IMAGE := $(BUILD_DIR)/image
+
+BOOT_OBJS := $(addprefix $(BUILD_DIR)/,$(BOOT_OBJS))
+KERNEL_OBJS := $(addprefix $(BUILD_DIR)/,$(KERNEL_OBJS))
 
 .PHONY: all
 all: $(IMAGE) $(BOOTBLOCK).lst $(KERNEL).lst
 
 .PHONY: clean
 clean:
-	rm -f -- $(BOOTBLOCK) $(BOOTBLOCK).lst $(BOOTBLOCK).bin
-	rm -f -- $(KERNEL) $(KERNEL).lst $(KERNEL).bin
-	rm -f -- $(IMAGE)
-	rm -f -- *.o
-	rm -f -- *.d
+	rm -rf -- $(BUILD_DIR)
 
 .PHONY: qemu
 qemu: all
 	qemu-system-i386 --monitor stdio --machine isapc --cpu 486 -m 4 -fda $(IMAGE)
 
 $(IMAGE): $(BOOTBLOCK).bin $(KERNEL).bin
-	cat $(BOOTBLOCK).bin kernel.bin > $@
+	cat $(BOOTBLOCK).bin $(KERNEL).bin > $@
 
 $(BOOTBLOCK): $(BOOT_OBJS) bootblock.ld
 	$(LD) -T bootblock.ld $(BOOT_OBJS) -o $@
@@ -43,9 +44,10 @@ $(BOOTBLOCK): $(BOOT_OBJS) bootblock.ld
 $(KERNEL): $(KERNEL_OBJS) kernel.ld
 	$(LD) -T kernel.ld $(KERNEL_OBJS) -o $@
 
-bootblock.ld:
+$(BUILD_DIR):
+	mkdir $@
 
-kernel.ld:
+%.ld:
 
 %.bin: %
 	$(OBJCOPY) -Obinary $< $@
@@ -53,10 +55,10 @@ kernel.ld:
 %.lst: %
 	$(OBJDUMP) -d -M i386 $< > $@
 
-%.o: %.S
+$(BUILD_DIR)/%.o: %.S | $(BUILD_DIR)
 	$(CC) -c $< -MD -MP -MT $@ -MF $(@:%o=%d) -o $@
 
-%.o: %.c
+$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -MD -MP -MT $@ -MF $(@:%o=%d) -o $@
 
 DEPS := $(KERNEL_OBJS:%o=%d)
