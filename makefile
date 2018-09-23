@@ -42,6 +42,10 @@ clean:
 qemu: all
 	qemu-system-i386 --monitor stdio --machine isapc --cpu 486 -m 4 -fda $(IMAGE)
 
+.PHONY: format
+format:
+	astyle -j -A2 --align-pointer=name --indent=spaces=4 --indent-switches --keep-one-line-blocks --pad-header --convert-tabs -r \*.c \*.h
+
 $(IMAGE): $(BOOTBLOCK).bin $(KERNEL).bin $(MAKEFLOP) | $(BUILD_DIR)
 	$(MAKEFLOP) $(BOOTBLOCK).bin $(KERNEL).bin $@
 
