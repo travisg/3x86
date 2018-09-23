@@ -149,7 +149,6 @@ code32:
     pushl   vesa_info
 
     xor     %eax,%eax
-
     mov     in_vesa, %al
     push    %eax
 
@@ -160,14 +159,17 @@ code32:
     push    %edx
 
     // if we didn't find any info in the extended memory search, do a memory probe
-    xor     %eax, %eax          // default memsize = 0
-    or      %edx, %edx
-    jnz     no_probe_mem        // if ext_mem_info is a real pointer, we don't need to probe
+    or      %al, %al
+    jnz     no_probe_mem        // if ext_mem_count is nonzero, we don't need to probe
 
     call    find_mem_size_probe
-no_probe_mem:
     push    %eax
+    jmp     call_entry
 
+no_probe_mem:
+    push    $0
+
+call_entry:
     mov     $0x100000, %ebx
     call    *%ebx               // jump to stage1 entry
 inf:
