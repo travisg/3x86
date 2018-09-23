@@ -20,12 +20,21 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#pragma once
+#include <stdio.h>
 
-#include <compiler.h>
-#include <stddef.h>
+#include <console.h>
+#include <limits.h>
+#include <string.h>
 
-void *memcpy(void *dest, const void *src, size_t count);
-void *memset(void *s, int c, size_t count);
+int putchar(int _c) {
+    char c = _c;
+    console_write(&c, 1, true);
+    return c;
+}
 
-size_t strlen(char const *) __PURE;
+int puts(const char *c) {
+    console_write(c, (size_t)-1, true);
+    putchar('\n');
+    return 0;
+}
+

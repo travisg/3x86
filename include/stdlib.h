@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Travis Geiselbrecht
+ * Copyright (c) 2008-2014 Travis Geiselbrecht
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files
@@ -23,9 +23,18 @@
 #pragma once
 
 #include <compiler.h>
+#include <printf.h>
+#include <sys/types.h>
 #include <stddef.h>
+#include <stdio.h>
 
-void *memcpy(void *dest, const void *src, size_t count);
-void *memset(void *s, int c, size_t count);
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
-size_t strlen(char const *) __PURE;
+#define ROUNDUP(a, b) (((a) + ((b)-1)) & ~((b)-1))
+#define ROUNDDOWN(a, b) ((a) & ~((b)-1))
+
+#define ALIGN(a, b) ROUNDUP(a, b)
+#define IS_ALIGNED(a, b) (!(((uintptr_t)(a)) & (((uintptr_t)(b))-1)))
+
+

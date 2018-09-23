@@ -22,23 +22,24 @@
  */
 #include <stdint.h>
 
-#include "console.h"
-
-void puts(const char *str) {
-    while (*str != 0) {
-        putchar(*str);
-        if (*str == '\n')
-            putchar('\r');
-        str++;
-    }
-}
+#include <console.h>
+#include <stdio.h>
 
 void _start_c(unsigned int mem, void *ext_mem_block, int ext_mem_count, int in_vesa, unsigned int vesa_ptr) {
     console_init();
 
-    puts("hello world\n");
-    puts("a second line\n\n\n");
-    puts("a third line\n");
+    puts("hello world");
+    puts("a second line");
+    puts("a third line");
+
+    printf("using printf ");
+    printf("%d %ld\n", 9, 99);
+
+    for (int i = 0; i < 9; i++) {
+        printf("line %d\n", i);
+    }
+    printf("another line!\n");
+    puts("putsing something");
 
     for (;;);
 }

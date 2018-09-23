@@ -46,3 +46,13 @@ void * memset(void *dest, int c, size_t count) {
         : "memory", "cc");
     return olddest;
 }
+
+size_t strlen(char const *s) {
+    size_t i = 0;
+
+    while (s[i]) {
+        i+= 1;
+    }
+
+    return i;
+}

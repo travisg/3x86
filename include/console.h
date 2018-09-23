@@ -22,5 +22,12 @@
  */
 #pragma once
 
+#include <stddef.h>
+#include <stdbool.h>
+
 void console_init(void);
-void putchar(int c);
+
+// write at most len chars or until end of string to the console
+// return number of characters written
+int console_write(const char *str, size_t len, bool crlf);
+

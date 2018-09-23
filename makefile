@@ -4,7 +4,11 @@ LD := i386-elf-ld
 OBJDUMP := i386-elf-objdump
 OBJCOPY := i386-elf-objcopy
 
-CFLAGS := -march=i386 -ffreestanding -Os -Iinclude -Wall
+CFLAGS := -march=i386 -ffreestanding -Os -Iinclude --std=gnu11 -fbuiltin
+CFLAGS += -W -Wall -Wno-multichar -Wno-unused-parameter -Wno-unused-function -Wno-unused-label -Werror=return-type -Wno-nonnull-compare
+CFLAGS += -Werror-implicit-function-declaration -Wstrict-prototypes -Wwrite-strings
+
+LIBGCC := $(shell $(CC) $(CFLAGS) --print-libgcc-file-name)
 
 BUILD_DIR := build
 
@@ -15,6 +19,8 @@ KERNEL_OBJS := \
 	start.o \
 	main.o \
 	console.o \
+	printf.o \
+	stdio.o \
 	string.o \
 
 KERNEL := $(BUILD_DIR)/kernel
@@ -42,7 +48,7 @@ $(BOOTBLOCK): $(BOOT_OBJS) bootblock.ld
 	$(LD) -T bootblock.ld $(BOOT_OBJS) -o $@
 
 $(KERNEL): $(KERNEL_OBJS) kernel.ld
-	$(LD) -T kernel.ld $(KERNEL_OBJS) -o $@
+	$(LD) -T kernel.ld $(KERNEL_OBJS) -o $@ $(LIBGCC)
 
 $(BUILD_DIR):
 	mkdir $@

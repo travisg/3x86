@@ -23,9 +23,8 @@
 #pragma once
 
 #include <compiler.h>
-#include <stddef.h>
+#include <printf.h>
 
-void *memcpy(void *dest, const void *src, size_t count);
-void *memset(void *s, int c, size_t count);
+int putchar(int c);
+int puts(const char *c);
 
-size_t strlen(char const *) __PURE;

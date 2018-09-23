@@ -2,3 +2,7 @@
 *~
 *.o
 *.d
+tags
+TAGS
+cscope.out
+build

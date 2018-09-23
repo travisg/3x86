@@ -34,15 +34,16 @@ static unsigned line = 0;
 void console_init(void) {
 }
 
-static void scrup(void) {
-    memcpy(vga, vga + SCREEN_WIDTH, (SCREEN_HEIGHT - 1) * SCREEN_HEIGHT * 2);
+// scroll the screen by copying line 1-24 to line 0-23
+// and then clearing the last line
+static void console_scrup(void) {
+    memcpy(vga, vga + SCREEN_WIDTH, (SCREEN_HEIGHT - 1) * SCREEN_WIDTH * 2);
     for (int i = 0; i < SCREEN_WIDTH; i++) {
         vga[(SCREEN_HEIGHT - 1) * SCREEN_WIDTH + i] = 0x720;
     }
 }
 
-void putchar(int c) {
-
+static void console_putchar(char c) {
     switch (c) {
         case '\n':
             line++;
@@ -58,10 +59,23 @@ void putchar(int c) {
     if (col == SCREEN_WIDTH) {
         col = 0;
         line++;
-        if (line == SCREEN_HEIGHT) {
-            scrup();
-            line--;
-        }
     }
+    if (line == SCREEN_HEIGHT) {
+        console_scrup();
+        line--;
+    }
+}
+
+int console_write(const char *str, size_t len, bool crlf) {
+    size_t i;
+    for (i = 0; *str && i < len; i++) {
+        char c = *str++;
+        if (crlf && c == '\n') {
+            console_putchar('\r');
+        }
+        console_putchar(c);
+    }
+
+    return i;
 }
 
