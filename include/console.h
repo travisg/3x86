@@ -25,7 +25,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-void console_init(void);
+void console_init(bool clear);
 
 // write at most len chars or until end of string to the console
 // return number of characters written

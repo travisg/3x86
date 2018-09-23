@@ -31,10 +31,21 @@ _start:
     xor     %eax, %eax
     rep     stosb
 
-    // branch into C
-    jmp     _start_c
+    // switch to the new stack and move 5 args from the old
+    mov     %esp, %eax
+    mov     $start_heap_end, %esp
+    pushl   0x14(%eax)
+    pushl   0x10(%eax)
+    pushl   0xc(%eax)
+    pushl   0x8(%eax)
+    pushl   0x4(%eax)
+
+    // call into C
+    call     _start_c
+    jmp     .
 
 .bss
+.balign 4
 .globl start_heap
 start_heap:
     .skip 4096

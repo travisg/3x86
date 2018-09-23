@@ -25,21 +25,18 @@
 #include <console.h>
 #include <stdio.h>
 
-void _start_c(unsigned int mem, void *ext_mem_block, int ext_mem_count, int in_vesa, unsigned int vesa_ptr) {
-    console_init();
+// main C entry point
+void _start_c(unsigned int mem, void *ext_mem_block, int ext_mem_count, int in_vesa, void *vesa_ptr) {
+    console_init(true);
 
-    puts("hello world");
-    puts("a second line");
-    puts("a third line");
+    printf("Welcome to 3x86 OS\n");
 
-    printf("using printf ");
-    printf("%d %ld\n", 9, 99);
+    printf("arguments from bootloader:\n\tmem %#x\n\text_mem_block %p ext_mem_count %d\n\tin_vesa %d vesa_ptr %p\n",
+            mem, ext_mem_block, ext_mem_count, in_vesa, vesa_ptr);
 
-    for (int i = 0; i < 9; i++) {
-        printf("line %d\n", i);
+    printf("Reached the end. Spinning forever\n");
+    __asm__ volatile("cli");
+    for (;;) {
+        __asm__ volatile("hlt");
     }
-    printf("another line!\n");
-    puts("putsing something");
-
-    for (;;);
 }

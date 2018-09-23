@@ -23,6 +23,7 @@
 #include <console.h>
 
 #include <string.h>
+#include <stdlib.h>
 
 static unsigned short *vga = (void *)0xb8000;
 static unsigned col = 0;
@@ -31,7 +32,12 @@ static unsigned line = 0;
 #define SCREEN_WIDTH 80
 #define SCREEN_HEIGHT 25
 
-void console_init(void) {
+void console_init(bool clear) {
+    if (clear) {
+        for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
+            vga[i] = 0x720;
+        }
+    }
 }
 
 // scroll the screen by copying line 1-24 to line 0-23
@@ -51,12 +57,15 @@ static void console_putchar(char c) {
         case '\r':
             col = 0;
             break;
+        case '\t':
+            col = ROUNDUP(col + 1, 4);
+            break;
         default:
             vga[line * SCREEN_WIDTH + col] = 0xf00 | (c & 0x7f);
             col++;
     }
 
-    if (col == SCREEN_WIDTH) {
+    if (col >= SCREEN_WIDTH) {
         col = 0;
         line++;
     }
