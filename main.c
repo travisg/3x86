@@ -49,7 +49,7 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
     printf("Welcome to 3x86 OS\n");
 
     printf("arguments from bootloader:\n\tmem %#x\n\text_mem_block %p ext_mem_count %zu\n\tin_vesa %d vesa_ptr %p\n",
-            mem, ext_mem_block, ext_mem_count, in_vesa, vesa_ptr);
+           mem, ext_mem_block, ext_mem_count, in_vesa, vesa_ptr);
 
     dump_e820(ext_mem_block, ext_mem_count);
 
@@ -59,5 +59,4 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
         __asm__ volatile("hlt");
     }
 }
-
 

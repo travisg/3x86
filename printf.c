@@ -35,8 +35,7 @@
 #define FLOAT_PRINTF 1
 #endif
 
-int sprintf(char *str, const char *fmt, ...)
-{
+int sprintf(char *str, const char *fmt, ...) {
     int err;
 
     va_list ap;
@@ -47,8 +46,7 @@ int sprintf(char *str, const char *fmt, ...)
     return err;
 }
 
-int snprintf(char *str, size_t len, const char *fmt, ...)
-{
+int snprintf(char *str, size_t len, const char *fmt, ...) {
     int err;
 
     va_list ap;
@@ -59,8 +57,7 @@ int snprintf(char *str, size_t len, const char *fmt, ...)
     return err;
 }
 
-int vsprintf(char *str, const char *fmt, va_list ap)
-{
+int vsprintf(char *str, const char *fmt, va_list ap) {
     return vsnprintf(str, INT_MAX, fmt, ap);
 }
 
@@ -70,8 +67,7 @@ struct _output_args {
     size_t pos;
 };
 
-static int _vsnprintf_output(const char *str, size_t len, void *state)
-{
+static int _vsnprintf_output(const char *str, size_t len, void *state) {
     struct _output_args *args = state;
 
     size_t count = 0;
@@ -87,8 +83,7 @@ static int _vsnprintf_output(const char *str, size_t len, void *state)
     return count;
 }
 
-int vsnprintf(char *str, size_t len, const char *fmt, va_list ap)
-{
+int vsnprintf(char *str, size_t len, const char *fmt, va_list ap) {
     struct _output_args args;
     int wlen;
 
@@ -97,10 +92,11 @@ int vsnprintf(char *str, size_t len, const char *fmt, va_list ap)
     args.pos = 0;
 
     wlen = _printf_engine(&_vsnprintf_output, (void *)&args, fmt, ap);
-    if (args.pos >= len)
+    if (args.pos >= len) {
         str[len-1] = '\0';
-    else
+    } else {
         str[wlen] = '\0';
+    }
     return wlen;
 }
 
@@ -119,8 +115,7 @@ int vsnprintf(char *str, size_t len, const char *fmt, va_list ap)
 #define LEADZEROFLAG   0x00001000
 #define BLANKPOSFLAG   0x00002000
 
-__NO_INLINE static char *longlong_to_string(char *buf, unsigned long long n, size_t len, uint flag, char *signchar)
-{
+__NO_INLINE static char *longlong_to_string(char *buf, unsigned long long n, size_t len, uint flag, char *signchar) {
     size_t pos = len;
     int negative = 0;
 
@@ -141,14 +136,15 @@ __NO_INLINE static char *longlong_to_string(char *buf, unsigned long long n, siz
     }
     buf[--pos] = n + '0';
 
-    if (negative)
+    if (negative) {
         *signchar = '-';
-    else if ((flag & SHOWSIGNFLAG))
+    } else if ((flag & SHOWSIGNFLAG)) {
         *signchar = '+';
-    else if ((flag & BLANKPOSFLAG))
+    } else if ((flag & BLANKPOSFLAG)) {
         *signchar = ' ';
-    else
+    } else {
         *signchar = '\0';
+    }
 
     return &buf[pos];
 }
@@ -156,8 +152,7 @@ __NO_INLINE static char *longlong_to_string(char *buf, unsigned long long n, siz
 static const char hextable[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 static const char hextable_caps[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
-__NO_INLINE static char *longlong_to_hexstring(char *buf, unsigned long long u, size_t len, uint flag)
-{
+__NO_INLINE static char *longlong_to_hexstring(char *buf, unsigned long long u, size_t len, uint flag) {
     size_t pos = len;
     const char *table = (flag & CAPSFLAG) ? hextable_caps : hextable;
 
@@ -182,8 +177,7 @@ union double_int {
 #define OUTSTR(str) do { for (size_t i = 0; (str)[i] != 0; i++) OUT((str)[i]); } while (0)
 
 /* print up to a 4 digit exponent as string, with sign */
-__NO_INLINE static size_t exponent_to_string(char *buf, int32_t exponent)
-{
+__NO_INLINE static size_t exponent_to_string(char *buf, int32_t exponent) {
     size_t pos = 0;
 
     /* handle sign */
@@ -195,10 +189,10 @@ __NO_INLINE static size_t exponent_to_string(char *buf, int32_t exponent)
     }
 
     /* see how far we need to bump into the string to print from the right */
-    if (exponent >= 1000) pos += 4;
-    else if (exponent >= 100) pos += 3;
-    else if (exponent >= 10) pos += 2;
-    else pos++;
+    if (exponent >= 1000) { pos += 4; }
+    else if (exponent >= 100) { pos += 3; }
+    else if (exponent >= 10) { pos += 2; }
+    else { pos++; }
 
     /* print decimal string, from the right */
     uint i = pos;
@@ -214,8 +208,7 @@ __NO_INLINE static size_t exponent_to_string(char *buf, int32_t exponent)
     return pos;
 }
 
-__NO_INLINE static char *double_to_string(char *buf, size_t len, double d, uint flag)
-{
+__NO_INLINE static char *double_to_string(char *buf, size_t len, double d, uint flag) {
     size_t pos = 0;
     union double_int u = { d };
 
@@ -237,12 +230,12 @@ __NO_INLINE static char *double_to_string(char *buf, size_t len, double d, uint 
     if (exponent == 0x7ff) {
         if (fraction == 0) {
             /* infinity */
-            if (flag & CAPSFLAG) OUTSTR("INF");
-            else OUTSTR("inf");
+            if (flag & CAPSFLAG) { OUTSTR("INF"); }
+            else { OUTSTR("inf"); }
         } else {
             /* NaN */
-            if (flag & CAPSFLAG) OUTSTR("NAN");
-            else OUTSTR("nan");
+            if (flag & CAPSFLAG) { OUTSTR("NAN"); }
+            else { OUTSTR("nan"); }
         }
     } else if (exponent == 0) {
         if (fraction == 0) {
@@ -251,8 +244,8 @@ __NO_INLINE static char *double_to_string(char *buf, size_t len, double d, uint 
         } else {
             /* denormalized */
             /* XXX does not handle */
-            if (flag & CAPSFLAG) OUTSTR("DEN");
-            else OUTSTR("den");
+            if (flag & CAPSFLAG) { OUTSTR("DEN"); }
+            else { OUTSTR("den"); }
         }
     } else {
         /* see if it's in the range of floats we can easily print */
@@ -266,8 +259,9 @@ __NO_INLINE static char *double_to_string(char *buf, size_t len, double d, uint 
             OUTREV(0);
 
             /* reserve space for the fractional component first */
-            for (int i = 0; i <= 6; i++)
+            for (int i = 0; i <= 6; i++) {
                 OUTREV('0');
+            }
             size_t decimal_spot = pos;
 
             /* print the integer portion */
@@ -300,8 +294,9 @@ __NO_INLINE static char *double_to_string(char *buf, size_t len, double d, uint 
                 frac /= 10;
             }
 
-            if (neg)
+            if (neg) {
                 OUTREV('-');
+            }
 
 done:
             /* separate return path, since we've been walking backwards through the string */
@@ -314,8 +309,7 @@ done:
     return buf;
 }
 
-__NO_INLINE static char *double_to_hexstring(char *buf, size_t len, double d, uint flag)
-{
+__NO_INLINE static char *double_to_hexstring(char *buf, size_t len, double d, uint flag) {
     size_t pos = 0;
     union double_int u = { d };
 
@@ -332,23 +326,23 @@ __NO_INLINE static char *double_to_hexstring(char *buf, size_t len, double d, ui
     if (exponent == 0x7ff) {
         if (fraction == 0) {
             /* infinity */
-            if (flag & CAPSFLAG) OUTSTR("INF");
-            else OUTSTR("inf");
+            if (flag & CAPSFLAG) { OUTSTR("INF"); }
+            else { OUTSTR("inf"); }
         } else {
             /* NaN */
-            if (flag & CAPSFLAG) OUTSTR("NAN");
-            else OUTSTR("nan");
+            if (flag & CAPSFLAG) { OUTSTR("NAN"); }
+            else { OUTSTR("nan"); }
         }
     } else if (exponent == 0) {
         if (fraction == 0) {
             /* zero */
-            if (flag & CAPSFLAG) OUTSTR("0X0P+0");
-            else OUTSTR("0x0p+0");
+            if (flag & CAPSFLAG) { OUTSTR("0X0P+0"); }
+            else { OUTSTR("0x0p+0"); }
         } else {
             /* denormalized */
             /* XXX does not handle */
-            if (flag & CAPSFLAG) OUTSTR("DEN");
-            else OUTSTR("den");
+            if (flag & CAPSFLAG) { OUTSTR("DEN"); }
+            else { OUTSTR("den"); }
         }
     } else {
         /* regular normalized numbers:
@@ -360,8 +354,8 @@ __NO_INLINE static char *double_to_hexstring(char *buf, size_t len, double d, ui
         int exponent_signed = exponent - 1023;
 
         /* implicit 1. */
-        if (flag & CAPSFLAG) OUTSTR("0X1");
-        else OUTSTR("0x1");
+        if (flag & CAPSFLAG) { OUTSTR("0X1"); }
+        else { OUTSTR("0x1"); }
 
         /* select the appropriate hex case table */
         const char *table = (flag & CAPSFLAG) ? hextable_caps : hextable;
@@ -402,8 +396,7 @@ __NO_INLINE static char *double_to_hexstring(char *buf, size_t len, double d, ui
 
 #endif // FLOAT_PRINTF
 
-int _printf_engine(_printf_engine_output_func out, void *state, const char *fmt, va_list ap)
-{
+int _printf_engine(_printf_engine_output_func out, void *state, const char *fmt, va_list ap) {
     int err = 0;
     char c;
     unsigned char uc;
@@ -430,8 +423,9 @@ int _printf_engine(_printf_engine_output_func out, void *state, const char *fmt,
         s = fmt;
         string_len = 0;
         while ((c = *fmt++) != 0) {
-            if (c == '%')
-                break; /* we saw a '%', break and start parsing format */
+            if (c == '%') {
+                break;    /* we saw a '%', break and start parsing format */
+            }
             string_len++;
         }
 
@@ -439,19 +433,22 @@ int _printf_engine(_printf_engine_output_func out, void *state, const char *fmt,
         OUTPUT_STRING(s, string_len);
 
         /* make sure we haven't just hit the end of the string */
-        if (c == 0)
+        if (c == 0) {
             break;
+        }
 
 next_format:
         /* grab the next format character */
         c = *fmt++;
-        if (c == 0)
+        if (c == 0) {
             break;
+        }
 
         switch (c) {
             case '0'...'9':
-                if (c == '0' && format_num == 0)
+                if (c == '0' && format_num == 0) {
                     flags |= LEADZEROFLAG;
+                }
                 format_num *= 10;
                 format_num += c - '0';
                 goto next_format;
@@ -467,8 +464,9 @@ next_format:
                 break;
             case 's':
                 s = va_arg(ap, const char *);
-                if (s == 0)
+                if (s == 0) {
                     s = "<null>";
+                }
                 flags &= ~LEADZEROFLAG; /* doesn't make sense for strings */
                 goto _output_string;
             case '-':
@@ -484,13 +482,15 @@ next_format:
                 flags |= ALTFLAG;
                 goto next_format;
             case 'l':
-                if (flags & LONGFLAG)
+                if (flags & LONGFLAG) {
                     flags |= LONGLONGFLAG;
+                }
                 flags |= LONGFLAG;
                 goto next_format;
             case 'h':
-                if (flags & HALFFLAG)
+                if (flags & HALFFLAG) {
                     flags |= HALFHALFFLAG;
+                }
                 flags |= HALFFLAG;
                 goto next_format;
             case 'z':
@@ -550,23 +550,24 @@ hex:
                 goto _output_string;
             case 'n':
                 ptr = va_arg(ap, void *);
-                if (flags & LONGLONGFLAG)
+                if (flags & LONGLONGFLAG) {
                     *(long long *)ptr = chars_written;
-                else if (flags & LONGFLAG)
+                } else if (flags & LONGFLAG) {
                     *(long *)ptr = chars_written;
-                else if (flags & HALFHALFFLAG)
+                } else if (flags & HALFHALFFLAG) {
                     *(signed char *)ptr = chars_written;
-                else if (flags & HALFFLAG)
+                } else if (flags & HALFFLAG) {
                     *(short *)ptr = chars_written;
-                else if (flags & SIZETFLAG)
+                } else if (flags & SIZETFLAG) {
                     *(size_t *)ptr = chars_written;
-                else
+                } else {
                     *(int *)ptr = chars_written;
+                }
                 break;
 #if FLOAT_PRINTF
             case 'F':
                 flags |= CAPSFLAG;
-                /* fallthrough */
+            /* fallthrough */
             case 'f': {
                 double d = va_arg(ap, double);
                 s = double_to_string(num_buffer, sizeof(num_buffer), d, flags);
@@ -574,7 +575,7 @@ hex:
             }
             case 'A':
                 flags |= CAPSFLAG;
-                /* fallthrough */
+            /* fallthrough */
             case 'a': {
                 double d = va_arg(ap, double);
                 s = double_to_hexstring(num_buffer, sizeof(num_buffer), d, flags);
@@ -600,27 +601,32 @@ _output_string:
             uint written = err;
 
             /* pad to the right (if necessary) */
-            for (; format_num > written; format_num--)
+            for (; format_num > written; format_num--) {
                 OUTPUT_CHAR(' ');
+            }
         } else {
             /* right justify the text (digits) */
 
             /* if we're going to print a sign digit,
                it'll chew up one byte of the format size */
-            if (signchar != '\0' && format_num > 0)
+            if (signchar != '\0' && format_num > 0) {
                 format_num--;
+            }
 
             /* output the sign char before the leading zeros */
-            if (flags & LEADZEROFLAG && signchar != '\0')
+            if (flags & LEADZEROFLAG && signchar != '\0') {
                 OUTPUT_CHAR(signchar);
+            }
 
             /* pad according to the format string */
-            for (; format_num > string_len; format_num--)
+            for (; format_num > string_len; format_num--) {
                 OUTPUT_CHAR(flags & LEADZEROFLAG ? '0' : ' ');
+            }
 
             /* if not leading zeros, output the sign char just before the number */
-            if (!(flags & LEADZEROFLAG) && signchar != '\0')
+            if (!(flags & LEADZEROFLAG) && signchar != '\0') {
                 OUTPUT_CHAR(signchar);
+            }
 
             /* output the string */
             OUTPUT_STRING(s, string_len);
@@ -635,8 +641,7 @@ exit:
     return (err < 0) ? err : (int)chars_written;
 }
 
-int _printf(const char *fmt, ...)
-{
+int _printf(const char *fmt, ...) {
     va_list ap;
     int err;
 
@@ -647,8 +652,7 @@ int _printf(const char *fmt, ...)
     return err;
 }
 
-int _vprintf(const char *fmt, va_list ap)
-{
+int _vprintf(const char *fmt, va_list ap) {
     return _printf_engine((void *)&console_write, (void *)1, fmt, ap);
 }
 
