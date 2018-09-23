@@ -24,8 +24,9 @@ KERNEL_OBJS := \
 	string.o \
 
 KERNEL := $(BUILD_DIR)/kernel
-
 IMAGE := $(BUILD_DIR)/image
+
+MAKEFLOP := $(BUILD_DIR)/makeflop
 
 BOOT_OBJS := $(addprefix $(BUILD_DIR)/,$(BOOT_OBJS))
 KERNEL_OBJS := $(addprefix $(BUILD_DIR)/,$(KERNEL_OBJS))
@@ -41,14 +42,17 @@ clean:
 qemu: all
 	qemu-system-i386 --monitor stdio --machine isapc --cpu 486 -m 4 -fda $(IMAGE)
 
-$(IMAGE): $(BOOTBLOCK).bin $(KERNEL).bin
-	cat $(BOOTBLOCK).bin $(KERNEL).bin > $@
+$(IMAGE): $(BOOTBLOCK).bin $(KERNEL).bin $(MAKEFLOP) | $(BUILD_DIR)
+	$(MAKEFLOP) $(BOOTBLOCK).bin $(KERNEL).bin $@
 
-$(BOOTBLOCK): $(BOOT_OBJS) bootblock.ld
+$(BOOTBLOCK): $(BOOT_OBJS) bootblock.ld | $(BUILD_DIR)
 	$(LD) -T bootblock.ld $(BOOT_OBJS) -o $@
 
-$(KERNEL): $(KERNEL_OBJS) kernel.ld
+$(KERNEL): $(KERNEL_OBJS) kernel.ld | $(BUILD_DIR)
 	$(LD) -T kernel.ld $(KERNEL_OBJS) -o $@ $(LIBGCC)
+
+$(MAKEFLOP): makeflop.c | $(BUILD_DIR)
+	cc -O -Wall $< -o $@
 
 $(BUILD_DIR):
 	mkdir $@
