@@ -4,9 +4,10 @@ LD := i386-elf-ld
 OBJDUMP := i386-elf-objdump
 OBJCOPY := i386-elf-objcopy
 
-CFLAGS := -march=i386 -ffreestanding -Os -Iinclude --std=gnu11 -fbuiltin -mgeneral-regs-only
+CFLAGS := -march=i386 -ffreestanding -Os --std=gnu11 -fbuiltin
 CFLAGS += -W -Wall -Wno-multichar -Wno-unused-parameter -Wno-unused-function -Wno-unused-label -Werror=return-type -Wno-nonnull-compare
 CFLAGS += -Werror-implicit-function-declaration -Wstrict-prototypes -Wwrite-strings
+INCLUDES := -Iinclude
 
 LIBGCC := $(shell $(CC) $(CFLAGS) --print-libgcc-file-name)
 
@@ -18,6 +19,8 @@ BOOTBLOCK := $(BUILD_DIR)/bootblock
 KERNEL_OBJS := \
 	start.o \
 	main.o \
+	exceptions.o \
+\
 	console.o \
 	printf.o \
 	stdio.o \
@@ -71,10 +74,10 @@ $(BUILD_DIR):
 	$(OBJDUMP) -d -M i386 $< > $@
 
 $(BUILD_DIR)/%.o: %.S | $(BUILD_DIR)
-	$(CC) -c $< -MD -MP -MT $@ -MF $(@:%o=%d) -o $@
+	$(CC) $(INCLUDES) -c $< -MD -MP -MT $@ -MF $(@:%o=%d) -o $@
 
 $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -MD -MP -MT $@ -MF $(@:%o=%d) -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -MD -MP -MT $@ -MF $(@:%o=%d) -o $@
 
 DEPS := $(KERNEL_OBJS:%o=%d)
 

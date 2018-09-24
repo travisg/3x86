@@ -22,7 +22,55 @@
  */
 #pragma once
 
+// System Selectors
+#define NULL_SELECTOR       0x00
+
+// x86 selectors
+#define CODE_SELECTOR       0x08
+#define DATA_SELECTOR       0x10
+#define USER_CODE_32_SELECTOR   (0x18 | 3)
+#define USER_DATA_32_SELECTOR   (0x20 | 3)
+
+// only implement 0x30 interrupts for now
+#define NUM_INT             0x30
+
+#ifndef __ASSEMBLER__
+
+#include <compiler.h>
 #include <stdint.h>
+
+// 32bit generic descriptors
+struct x86_desc_32 {
+    uint16_t seg_limit_15_0;
+    uint16_t base_addres_15_0;
+    uint8_t  base_addres_23_16;
+    uint8_t  p_dpl_s_type;
+    uint8_t  g_db_seg_limit_19_16;
+    uint8_t  base_31_24;
+} __PACKED;
+
+// gate descriptors
+struct x86_gate_desc_32 {
+    uint16_t seg_offset_15_0;
+    uint16_t seg;
+    uint8_t  param_count;
+    uint8_t  p_dpl_type;
+    uint16_t seg_offset_31_16;
+} __PACKED;
+
+struct x86_desc_ptr {
+    uint16_t len;
+    uint32_t ptr;
+} __PACKED;
+
+struct x86_iframe {
+    uint32_t di, si, bp, sp, bx, dx, cx, ax;            // pushed by common handler using pusha
+    uint32_t ds, es, fs, gs;                            // pushed by common handler
+    uint32_t vector;                                    // pushed by stub
+    uint32_t err_code;                                  // pushed by interrupt or stub
+    uint32_t ip, cs, flags;                             // pushed by interrupt
+    uint32_t user_sp, user_ss;                          // pushed by interrupt if priv change occurs
+};
 
 static inline void x86_clts(void) {__asm__ __volatile__ ("clts"); }
 static inline void x86_hlt(void) {__asm__ __volatile__ ("hlt"); }
@@ -43,6 +91,15 @@ static inline void x86_set_cr0(uint32_t in_val) {
         "mov %0,%%cr0 \n\t"
         :
         :"r" (in_val));
+}
+
+static inline uint32_t x86_get_cr2(void) {
+    uint32_t rv;
+
+    __asm__ __volatile__ (
+        "mov %%cr2, %0"
+        : "=r" (rv));
+    return rv;
 }
 
 static inline uint32_t x86_get_cr3(void) {
@@ -127,14 +184,7 @@ static inline void outpd(uint16_t _port, uint32_t _data) {
                           "a" (_data));
 }
 
-// System Selectors
-#define NULL_SELECTOR       0x00
-
-// x86 selectors
-#define CODE_SELECTOR       0x08
-#define DATA_SELECTOR       0x10
-#define USER_CODE_32_SELECTOR   (0x18 | 3)
-#define USER_DATA_32_SELECTOR   (0x20 | 3)
-
 // functions
 void x86_init(void);
+
+#endif

@@ -26,22 +26,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-// 32bit generic descriptors
-struct desc_32 {
-    uint16_t seg_limit_15_0;
-    uint16_t base_addres_15_0;
-    uint8_t  base_addres_23_16;
-    uint8_t  p_dpl_s_type;
-    uint8_t  g_db_seg_limit_19_16;
-    uint8_t  base_31_24;
-} __PACKED;
-
-struct desc_ptr {
-    uint16_t len;
-    uint32_t ptr;
-} __PACKED;
-
-static struct desc_32 gdt[] = {
+static struct x86_desc_32 gdt[] = {
     { 0 }, // null descriptor
     {
         // ring 0 code segment 0x8
@@ -81,33 +66,17 @@ static struct desc_32 gdt[] = {
     },
 };
 
-// gate descriptors
-struct gate_desc_32 {
-    uint16_t seg_offset_15_0;
-    uint16_t seg;
-    uint8_t  param_count;
-    uint8_t  p_dpl_type;
-    uint16_t seg_offset_31_16;
-} __PACKED;
+static struct x86_gate_desc_32 idt[NUM_INT];
 
-static struct gate_desc_32 idt[256];
-
-__attribute__((interrupt))
-void x86_exception_entry(void *iframe, unsigned int error_code) {
-    printf("exception entry: iframe %p, error_code %u\n", iframe, error_code);
-    for (;;);
-}
-
-__attribute__((interrupt))
-void x86_irq_entry(void *iframe) {
-    printf("irq entry: iframe %p\n", iframe);
-    for (;;);
-}
+// declared in exceptions.S
+extern void x86_exception_entry(void);
+extern void x86_irq_entry(void);
+extern void _isr_table(void);
 
 // early cpu initialization
 void x86_init(void) {
     // switch to our GDT
-    struct desc_ptr gdt_ptr;
+    struct x86_desc_ptr gdt_ptr;
     gdt_ptr.len = sizeof(gdt) - 1;
     gdt_ptr.ptr = (uint32_t)gdt;
     __asm__ volatile("lgdt %0" :: "m"(gdt_ptr) : "memory");
@@ -128,22 +97,52 @@ void x86_init(void) {
         :: "i"(CODE_SELECTOR));
 
     // initialize the idt
-    for (int i = 0; i < 256; i++) {
-        uintptr_t target = (i < 32) ? (uintptr_t)x86_exception_entry : (uintptr_t)x86_irq_entry;
+    uintptr_t target = (uintptr_t)_isr_table;
+    for (int i = 0; i < NUM_INT; i++) {
         idt[i].seg_offset_15_0 = target & 0xffff;
         idt[i].seg = CODE_SELECTOR;
         idt[i].param_count = 0; // unused on int and trap gates
         idt[i].p_dpl_type = 0b10001110; // present, dpl 0, type E - 32bit interrupt gate
         idt[i].seg_offset_31_16 = (target >> 16) & 0xffff;
+
+        // each irq veneer routine is exactly 9 bytes long to make it easy
+        // to walk through the table here.
+        // irq veneers are implemented in exceptions.S
+        target += 9;
     }
 
     // load the IDT
-    struct desc_ptr idt_ptr;
+    struct x86_desc_ptr idt_ptr;
     idt_ptr.len = sizeof(idt) - 1;
     idt_ptr.ptr = (uint32_t)idt;
     __asm__ volatile("lidt %0" :: "m"(idt_ptr) : "memory");
+}
 
-    // trap
-    volatile int a = 5 / 0;
+static void dump_fault_frame(struct x86_iframe *frame) {
+    printf(" CS:     %04lx EIP: %08lx EFL: %08lx CR2: %08lx\n",
+           frame->cs, frame->ip, frame->flags, x86_get_cr2());
+    printf("EAX: %08lx ECX: %08lx EDX: %08lx EBX: %08lx\n",
+           frame->ax, frame->cx, frame->dx, frame->bx);
+    printf("ESP: %08lx EBP: %08lx ESI: %08lx EDI: %08lx\n",
+           frame->sp, frame->bp, frame->si, frame->di);
+    printf(" DS:     %04lx  ES:     %04lx  FS:   %04lx    GS:     %04lx\n",
+           frame->ds, frame->es, frame->fs, frame->gs);
+}
+
+static void exception_die(struct x86_iframe *frame, const char *msg) {
+    printf(msg);
+    dump_fault_frame(frame);
+
+    for (;;) {
+        x86_cli();
+        x86_hlt();
+    }
+}
+
+void x86_exception_handler(struct x86_iframe *iframe) {
+    printf("vector %lu\n", iframe->vector);
+    exception_die(iframe, "unhandled exception\n");
+
+    for (;;);
 }
 
