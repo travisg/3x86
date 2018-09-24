@@ -25,6 +25,7 @@
 #include <compiler.h>
 #include <console.h>
 #include <stdio.h>
+#include <x86.h>
 
 struct e820 {
     uint64_t base;      // 0x0
@@ -52,6 +53,8 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
            mem, ext_mem_block, ext_mem_count, in_vesa, vesa_ptr);
 
     dump_e820(ext_mem_block, ext_mem_count);
+
+    x86_init();
 
     printf("Reached the end. Spinning forever\n");
     __asm__ volatile("cli");

@@ -4,7 +4,7 @@ LD := i386-elf-ld
 OBJDUMP := i386-elf-objdump
 OBJCOPY := i386-elf-objcopy
 
-CFLAGS := -march=i386 -ffreestanding -Os -Iinclude --std=gnu11 -fbuiltin
+CFLAGS := -march=i386 -ffreestanding -Os -Iinclude --std=gnu11 -fbuiltin -mgeneral-regs-only
 CFLAGS += -W -Wall -Wno-multichar -Wno-unused-parameter -Wno-unused-function -Wno-unused-label -Werror=return-type -Wno-nonnull-compare
 CFLAGS += -Werror-implicit-function-declaration -Wstrict-prototypes -Wwrite-strings
 
@@ -22,6 +22,7 @@ KERNEL_OBJS := \
 	printf.o \
 	stdio.o \
 	string.o \
+	x86.o
 
 KERNEL := $(BUILD_DIR)/kernel
 IMAGE := $(BUILD_DIR)/image
