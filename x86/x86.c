@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-struct x86_desc_32 gdt[] = {
+struct x86_desc_32 gdt[GDT_COUNT] = {
     { 0 }, // null descriptor
     {
         // ring 0 code segment 0x8
@@ -73,6 +73,7 @@ struct x86_desc_32 gdt[] = {
         0b10000000,       // G(1) 0 0 0 limit 19:16
         0x0               // base 31:24
     },
+    // 0x30+ are available user TSS descriptors
 };
 
 static struct x86_gate_desc_32 idt[NUM_INT];
@@ -152,7 +153,7 @@ static void exception_die(struct x86_iframe *frame, const char *msg) {
 }
 
 void x86_exception_handler(struct x86_iframe *iframe) {
-    printf("vector %lu\n", iframe->vector);
+    printf("vector %lu, err code %#lx\n", iframe->vector, iframe->err_code);
     exception_die(iframe, "unhandled exception\n");
 
     for (;;);

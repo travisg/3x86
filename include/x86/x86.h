@@ -32,10 +32,18 @@
 #define USER_DATA_32_SELECTOR   (0x20 | 3)
 #define KERNEL_TSS_SELECTOR 0x28
 
+// space for up to 16 tasks
+#define TASK_TSS_SELECTOR_BASE 0x30
+#define TASK_TSS_SELECTOR_COUNT 16
+
+#define GDT_COUNT (6 + TASK_TSS_SELECTOR_COUNT)
+
 // only implement 0x30 interrupts for now
 #define NUM_INT             0x30
 
 #ifndef __ASSEMBLER__
+
+_Static_assert(TASK_TSS_SELECTOR_BASE / 8 + TASK_TSS_SELECTOR_COUNT == GDT_COUNT, "");
 
 #include <compiler.h>
 #include <stdint.h>

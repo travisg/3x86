@@ -54,6 +54,9 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
 
     dump_e820(ext_mem_block, ext_mem_count);
 
+    extern void tss_test(void);
+    tss_test();
+
     printf("Reached the end. Spinning forever\n");
     __asm__ volatile("cli");
     for (;;) {
