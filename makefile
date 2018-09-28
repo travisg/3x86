@@ -17,15 +17,15 @@ BOOT_OBJS := bootblock.o
 BOOTBLOCK := $(BUILD_DIR)/bootblock
 
 KERNEL_OBJS := \
-	start.o \
-	main.o \
-	exceptions.o \
-\
 	console.o \
+	main.o \
 	printf.o \
+	start.o \
 	stdio.o \
 	string.o \
-	x86.o
+\
+	x86/exceptions.o \
+	x86/x86.o
 
 KERNEL := $(BUILD_DIR)/kernel
 IMAGE := $(BUILD_DIR)/image
@@ -34,6 +34,9 @@ MAKEFLOP := $(BUILD_DIR)/makeflop
 
 BOOT_OBJS := $(addprefix $(BUILD_DIR)/,$(BOOT_OBJS))
 KERNEL_OBJS := $(addprefix $(BUILD_DIR)/,$(KERNEL_OBJS))
+
+# makes sure the target dir exists
+MKDIR = if [ ! -d $(dir $@) ]; then mkdir -p $(dir $@); fi
 
 .PHONY: all
 all: $(IMAGE) $(BOOTBLOCK).lst $(KERNEL).lst
@@ -50,33 +53,38 @@ qemu: all
 format:
 	astyle -j -A2 --align-pointer=name --indent=spaces=4 --indent-switches --keep-one-line-blocks --pad-header --convert-tabs -r \*.c \*.h
 
-$(IMAGE): $(BOOTBLOCK).bin $(KERNEL).bin $(MAKEFLOP) | $(BUILD_DIR)
+$(IMAGE): $(BOOTBLOCK).bin $(KERNEL).bin $(MAKEFLOP)
+	@$(MKDIR)
 	$(MAKEFLOP) $(BOOTBLOCK).bin $(KERNEL).bin $@
 
-$(BOOTBLOCK): $(BOOT_OBJS) bootblock.ld | $(BUILD_DIR)
+$(BOOTBLOCK): $(BOOT_OBJS) bootblock.ld
+	@$(MKDIR)
 	$(LD) -T bootblock.ld $(BOOT_OBJS) -o $@
 
-$(KERNEL): $(KERNEL_OBJS) kernel.ld | $(BUILD_DIR)
+$(KERNEL): $(KERNEL_OBJS) kernel.ld
+	@$(MKDIR)
 	$(LD) -T kernel.ld $(KERNEL_OBJS) -o $@ $(LIBGCC)
 
-$(MAKEFLOP): makeflop.c | $(BUILD_DIR)
+$(MAKEFLOP): makeflop.c
+	@$(MKDIR)
 	cc -O -Wall $< -o $@
-
-$(BUILD_DIR):
-	mkdir $@
 
 %.ld:
 
 %.bin: %
+	@$(MKDIR)
 	$(OBJCOPY) -Obinary $< $@
 
 %.lst: %
+	@$(MKDIR)
 	$(OBJDUMP) -d -M i386 $< > $@
 
-$(BUILD_DIR)/%.o: %.S | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: %.S
+	@$(MKDIR)
 	$(CC) $(INCLUDES) -c $< -MD -MP -MT $@ -MF $(@:%o=%d) -o $@
 
-$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: %.c
+	@$(MKDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -MD -MP -MT $@ -MF $(@:%o=%d) -o $@
 
 DEPS := $(KERNEL_OBJS:%o=%d)

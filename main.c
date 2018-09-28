@@ -21,11 +21,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <stdint.h>
-
 #include <compiler.h>
 #include <console.h>
 #include <stdio.h>
-#include <x86.h>
+#include <x86/x86.h>
 
 struct e820 {
     uint64_t base;      // 0x0
@@ -46,6 +45,7 @@ static void dump_e820(const void *ptr, size_t count) {
 // main C entry point
 void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count, int in_vesa, void *vesa_ptr) {
     console_init(true);
+    x86_init();
 
     printf("Welcome to 3x86 OS\n");
 
@@ -53,8 +53,6 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
            mem, ext_mem_block, ext_mem_count, in_vesa, vesa_ptr);
 
     dump_e820(ext_mem_block, ext_mem_count);
-
-    x86_init();
 
     printf("Reached the end. Spinning forever\n");
     __asm__ volatile("cli");

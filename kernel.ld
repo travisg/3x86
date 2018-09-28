@@ -75,7 +75,6 @@ SECTIONS
         __bss_end = .;
     }
 
-
     _end = .;
 
     /DISCARD/ : { *(.comment .note .eh_frame) }

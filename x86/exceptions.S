@@ -23,7 +23,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <x86.h>
+#include <x86/x86.h>
 
 #define FUNCTION(x) .global x; .type x,STT_FUNC; x:
 #define DATA(x) .global x; .type x,STT_OBJECT; x:
