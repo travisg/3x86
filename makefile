@@ -25,6 +25,7 @@ KERNEL_OBJS := \
 	string.o \
 \
 	x86/exceptions.o \
+	x86/tss.o \
 	x86/x86.o
 
 KERNEL := $(BUILD_DIR)/kernel

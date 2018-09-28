@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-static struct x86_desc_32 gdt[] = {
+struct x86_desc_32 gdt[] = {
     { 0 }, // null descriptor
     {
         // ring 0 code segment 0x8
@@ -62,6 +62,15 @@ static struct x86_desc_32 gdt[] = {
         0x00,             // base 23:16
         0b11110010,       // P(1) DPL(11) S(1) 0 E(0) W(1) A(0)
         0b11001111,       // G(1) D(1) 0 0 limit 19:16
+        0x0               // base 31:24
+    },
+    {
+        // kernel TSS descriptor (0x28)
+        sizeof(kernel_tss),           // limit 15:00
+        0x0000,           // base 15:00
+        0x00,             // base 23:16
+        0b10001001,       // P(1) DPL(00) S(0) 1 0 B(0) 1
+        0b10000000,       // G(1) 0 0 0 limit 19:16
         0x0               // base 31:24
     },
 };
@@ -116,6 +125,9 @@ void x86_init(void) {
     idt_ptr.len = sizeof(idt) - 1;
     idt_ptr.ptr = (uint32_t)idt;
     __asm__ volatile("lidt %0" :: "m"(idt_ptr) : "memory");
+
+    // switch to the kernel tss
+    x86_tss_init();
 }
 
 static void dump_fault_frame(struct x86_iframe *frame) {
