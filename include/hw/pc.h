@@ -22,10 +22,6 @@
  */
 #pragma once
 
-#include <stdbool.h>
+// common definitions for PC hardware
+#define IRQ_PIT         0
 
-void pic_init(void);
-void pic_set_mask(unsigned char irq, bool set);
-void pic_send_eoi(unsigned char irq);
-
-void pic_irq(unsigned int vector);

@@ -51,7 +51,7 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
 
     printf("Welcome to 3x86 OS\n");
 
-    printf("arguments from bootloader:\n\tmem %#x\n\text_mem_block %p ext_mem_count %zu\n\tin_vesa %d vesa_ptr %p\n",
+    printf("Arguments from bootloader:\n\tmem %#x\n\text_mem_block %p ext_mem_count %zu\n\tin_vesa %d vesa_ptr %p\n",
            mem, ext_mem_block, ext_mem_count, in_vesa, vesa_ptr);
 
     dump_e820(ext_mem_block, ext_mem_count);
@@ -63,14 +63,10 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
     extern void tss_test(void);
     tss_test();
 
-    printf("reenabling interrupts\n");
+    printf("Enabling interrupts\n");
     x86_sti();
 
-    for (;;) {
-        printf("current time %lu\n", current_time());
-    }
-
-    printf("Reached the end. Spinning forever\n");
+    printf("Reached the end, spinning forever...\n");
     x86_cli();
     for (;;) {
         x86_hlt();

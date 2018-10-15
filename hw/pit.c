@@ -20,9 +20,11 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <hw/pic.h>
+#include <hw/pit.h>
 
 #include <stdio.h>
+#include <hw/pc.h>
+#include <hw/pic.h>
 #include <x86/x86.h>
 
 // driver for the 8253/8254 timer chip present on legacy PCs
@@ -36,9 +38,7 @@
 #define PIT_HZ          100     // tick rate we desire
 #define PIT_COUNTDOWN   11932   // PIT_FREQ / PIT_HZ rounded up
 
-#define PIT_IRQ         0
-
-static uint32_t ticks;
+static uint32_t timer_ticks;
 
 uint16_t pit_read_count(void) {
     uint16_t val;
@@ -70,18 +70,17 @@ void pit_init(void) {
     outp(PIT_DATA0, PIT_COUNTDOWN >> 8);
 
     // eoi and unmask the timer irq
-    pic_send_eoi(PIT_IRQ);
-    pic_set_mask(PIT_IRQ, false);
+    pic_send_eoi(IRQ_PIT);
+    pic_set_mask(IRQ_PIT, false);
 
     x86_irq_restore(flags);
 }
 
 // ticks at 100Hz
 void pit_irq(void) {
-    pic_send_eoi(PIT_IRQ);
-    ticks++;
+    timer_ticks++;
 }
 
 uint32_t current_time(void) {
-    return ticks * 10; // time in ms
+    return timer_ticks * 10; // time in ms
 }

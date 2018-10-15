@@ -22,6 +22,9 @@
  */
 #include <hw/pic.h>
 
+#include <stdio.h>
+#include <hw/pc.h>
+#include <hw/pit.h>
 #include <x86/x86.h>
 
 // driver for the pair of 8259a interrupt controllers present on legacy PCs
@@ -120,4 +123,17 @@ void pic_send_eoi(unsigned char irq) {
     }
 
     outp(PIC1_CMD, PIC_EOI);
+}
+
+// general top level irq routine for IRQs in the PIC range
+void pic_irq(unsigned int vector) {
+    pic_send_eoi(vector);
+    switch (vector) {
+        case IRQ_PIT:
+            pit_irq();
+            break;
+        default:
+            printf("unhandled PIC interrupt\n");
+            break;
+    }
 }
