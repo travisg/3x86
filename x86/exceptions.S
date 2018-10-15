@@ -34,23 +34,23 @@
 // define a table of up to 256 interrupt routines that push the irq number
 // and branch to a common routine.
 //
-// each routine is precisely 9 bytes apart and the idt construction code
+// each routine is precisely 16 bytes apart and the idt construction code
 // takes this into account.
+.balign 16
 FUNCTION(_isr_table)
 
 .set i, 0
 .rept NUM_INT
 
 .if i == 8 || (i >= 10 && i <= 14) || i == 17
-    nop                     // error code pushed by exception
-    nop                     // 2 nops are the same length as push byte
-    pushl $i                // interrupt number
-    jmp x86_interrupt_common
+    // error code is pushed by hardware
 .else
     pushl $0                // fill in error code in iframe
+.endif
     pushl $i                // interrupt number
     jmp x86_interrupt_common
-.endif
+
+.balign 16
 
 .set i, i + 1
 .endr

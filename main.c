@@ -24,6 +24,8 @@
 #include <compiler.h>
 #include <stdio.h>
 #include <hw/console.h>
+#include <hw/pic.h>
+#include <hw/pit.h>
 #include <x86/x86.h>
 
 struct e820 {
@@ -54,13 +56,22 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
 
     dump_e820(ext_mem_block, ext_mem_count);
 
+    // initialize hardware
+    pic_init();
+    pit_init();
+
     extern void tss_test(void);
     tss_test();
 
+    printf("reenabling interrupts\n");
+    x86_sti();
+
+    for (;;);
+
     printf("Reached the end. Spinning forever\n");
-    __asm__ volatile("cli");
+    x86_cli();
     for (;;) {
-        __asm__ volatile("hlt");
+        x86_hlt();
     }
 }
 

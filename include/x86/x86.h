@@ -171,8 +171,8 @@ static inline void x86_set_cr3(uint32_t in_val) {
 }
 typedef uint32_t x86_flags_t;
 
-static inline uint32_t x86_save_flags(void) {
-    unsigned int state;
+static inline x86_flags_t x86_save_flags(void) {
+    x86_flags_t state;
 
     __asm__ volatile(
         "pushfl;"
@@ -183,7 +183,7 @@ static inline uint32_t x86_save_flags(void) {
     return state;
 }
 
-static inline void x86_restore_flags(uint32_t flags) {
+static inline void x86_restore_flags(x86_flags_t flags) {
     __asm__ volatile(
         "pushl %0;"
         "popfl"
@@ -191,11 +191,26 @@ static inline void x86_restore_flags(uint32_t flags) {
         : "memory", "cc");
 }
 
+static inline x86_flags_t x86_irq_disable(void) {
+    x86_flags_t state;
+
+    __asm__ volatile(
+        "pushfl;"
+        "cli;"
+        "popl %0"
+        : "=rm" (state)
+        :: "memory");
+
+    return state;
+}
+
+#define x86_irq_restore(x) x86_restore_flags(x)
+
 static inline uint8_t inp(uint16_t _port) {
     uint8_t rv;
     __asm__ __volatile__ ("inb %1, %0"
                           : "=a" (rv)
-                          : "d" (_port));
+                          : "di" (_port));
     return (rv);
 }
 
@@ -203,7 +218,7 @@ static inline uint16_t inpw (uint16_t _port) {
     uint16_t rv;
     __asm__ __volatile__ ("inw %1, %0"
                           : "=a" (rv)
-                          : "d" (_port));
+                          : "di" (_port));
     return (rv);
 }
 
@@ -211,28 +226,28 @@ static inline uint32_t inpd(uint16_t _port) {
     uint32_t rv;
     __asm__ __volatile__ ("inl %1, %0"
                           : "=a" (rv)
-                          : "d" (_port));
+                          : "di" (_port));
     return (rv);
 }
 
 static inline void outp(uint16_t _port, uint8_t _data) {
     __asm__ __volatile__ ("outb %1, %0"
                           :
-                          : "d" (_port),
+                          : "di" (_port),
                           "a" (_data));
 }
 
 static inline void outpw(uint16_t _port, uint16_t _data) {
     __asm__ __volatile__ ("outw %1, %0"
                           :
-                          : "d" (_port),
+                          : "di" (_port),
                           "a" (_data));
 }
 
 static inline void outpd(uint16_t _port, uint32_t _data) {
     __asm__ __volatile__ ("outl %1, %0"
                           :
-                          : "d" (_port),
+                          : "di" (_port),
                           "a" (_data));
 }
 

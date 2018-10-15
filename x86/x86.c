@@ -115,10 +115,10 @@ void x86_init(void) {
         idt[i].p_dpl_type = 0b10001110; // present, dpl 0, type E - 32bit interrupt gate
         idt[i].seg_offset_31_16 = (target >> 16) & 0xffff;
 
-        // each irq veneer routine is exactly 9 bytes long to make it easy
+        // each irq veneer routine is exactly 16 bytes long to make it easy
         // to walk through the table here.
         // irq veneers are implemented in exceptions.S
-        target += 9;
+        target += 16;
     }
 
     // load the IDT
@@ -142,6 +142,7 @@ static void dump_fault_frame(struct x86_iframe *frame) {
            frame->ds, frame->es, frame->fs, frame->gs);
 }
 
+__NO_RETURN
 static void exception_die(struct x86_iframe *frame, const char *msg) {
     printf(msg);
     dump_fault_frame(frame);
@@ -153,7 +154,7 @@ static void exception_die(struct x86_iframe *frame, const char *msg) {
 }
 
 void x86_exception_handler(struct x86_iframe *iframe) {
-    printf("vector %lu, err code %#lx\n", iframe->vector, iframe->err_code);
+    printf("vector %lu (%#lx), err code %#lx\n", iframe->vector, iframe->vector, iframe->err_code);
     exception_die(iframe, "unhandled exception\n");
 
     for (;;);

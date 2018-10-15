@@ -24,6 +24,8 @@ KERNEL_OBJS := \
 	string.o \
 \
 	hw/console.o \
+	hw/pic.o \
+	hw/pit.o \
 \
 	x86/exceptions.o \
 	x86/tss.o \
@@ -49,7 +51,7 @@ clean:
 
 .PHONY: qemu
 qemu: all
-	qemu-system-i386 --monitor stdio --machine isapc --cpu 486 -m 4 -fda $(IMAGE)
+	qemu-system-i386 --monitor stdio --machine isapc --cpu 486 -m 4 -fda $(IMAGE) -d int
 
 .PHONY: format
 format:
