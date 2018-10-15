@@ -23,3 +23,7 @@
 #pragma once
 
 void pit_init(void);
+
+void pit_irq(void);
+
+uint32_t current_time(void);

@@ -66,7 +66,9 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
     printf("reenabling interrupts\n");
     x86_sti();
 
-    for (;;);
+    for (;;) {
+        printf("current time %lu\n", current_time());
+    }
 
     printf("Reached the end. Spinning forever\n");
     x86_cli();

@@ -38,6 +38,8 @@
 
 #define PIT_IRQ         0
 
+static uint32_t ticks;
+
 uint16_t pit_read_count(void) {
     uint16_t val;
 
@@ -72,4 +74,14 @@ void pit_init(void) {
     pic_set_mask(PIT_IRQ, false);
 
     x86_irq_restore(flags);
+}
+
+// ticks at 100Hz
+void pit_irq(void) {
+    pic_send_eoi(PIT_IRQ);
+    ticks++;
+}
+
+uint32_t current_time(void) {
+    return ticks * 10; // time in ms
 }

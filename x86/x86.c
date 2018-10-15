@@ -25,6 +25,8 @@
 #include <compiler.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <hw/pic.h>
+#include <hw/pit.h>
 
 struct x86_desc_32 gdt[GDT_COUNT] = {
     { 0 }, // null descriptor
@@ -154,9 +156,14 @@ static void exception_die(struct x86_iframe *frame, const char *msg) {
 }
 
 void x86_exception_handler(struct x86_iframe *iframe) {
-    printf("vector %lu (%#lx), err code %#lx\n", iframe->vector, iframe->vector, iframe->err_code);
-    exception_die(iframe, "unhandled exception\n");
 
-    for (;;);
+    switch (iframe->vector) {
+        case 0x20: // PIT_IRQ
+            pit_irq();
+            break;
+        default:
+            printf("vector %lu (%#lx), err code %#lx\n", iframe->vector, iframe->vector, iframe->err_code);
+            exception_die(iframe, "unhandled exception\n");
+    }
 }
 

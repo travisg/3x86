@@ -9,6 +9,9 @@ CFLAGS += -W -Wall -Wno-multichar -Wno-unused-parameter -Wno-unused-function -Wn
 CFLAGS += -Werror-implicit-function-declaration -Wstrict-prototypes -Wwrite-strings
 INCLUDES := -Iinclude
 
+# a particular usb floppy drive that I have for testing on real hardware
+FLOPPY_DEV ?= /dev/disk/by-id/usb-TEACV0.0_TEACV0.0
+
 LIBGCC := $(shell $(CC) $(CFLAGS) --print-libgcc-file-name)
 
 BUILD_DIR := build
@@ -51,11 +54,18 @@ clean:
 
 .PHONY: qemu
 qemu: all
-	qemu-system-i386 --monitor stdio --machine isapc --cpu 486 -m 4 -fda $(IMAGE) -d int
+	qemu-system-i386 --monitor stdio --machine isapc --cpu 486 -m 4 -fda $(IMAGE)
 
 .PHONY: format
 format:
 	astyle -j -A2 --align-pointer=name --indent=spaces=4 --indent-switches --keep-one-line-blocks --pad-header --convert-tabs -r \*.c \*.h
+
+.PHONY: disk
+disk: $(IMAGE)
+	@if [ -b $(FLOPPY_DEV) ]; then \
+		echo writing to $(FLOPPY_DEV); \
+		sudo dd if=$(IMAGE) of=$(FLOPPY_DEV) bs=512 conv=fdatasync; \
+	fi
 
 $(IMAGE): $(BOOTBLOCK).bin $(KERNEL).bin $(MAKEFLOP)
 	@$(MKDIR)
