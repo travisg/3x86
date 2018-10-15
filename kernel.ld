@@ -35,6 +35,7 @@ SECTIONS
     .text : AT(MEMBASE + KERNEL_LOAD_OFFSET) {
         __code_start = .;
         KEEP(*(.text.boot))
+        KEEP(*(.text.isr))
         *(.text* .sram.text)
         *(.gnu.linkonce.t.*)
         __code_end = .;

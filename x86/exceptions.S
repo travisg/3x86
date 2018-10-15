@@ -36,6 +36,8 @@
 //
 // each routine is precisely 16 bytes apart and the idt construction code
 // takes this into account.
+.section .text.isr
+
 .balign 16
 FUNCTION(_isr_table)
 

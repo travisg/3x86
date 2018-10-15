@@ -1,12 +1,17 @@
 
+USE_LTO ?= 1
+
 CC := i386-elf-gcc
 LD := i386-elf-ld
 OBJDUMP := i386-elf-objdump
 OBJCOPY := i386-elf-objcopy
 
-CFLAGS := -march=i386 -ffreestanding -Os --std=gnu11 -fbuiltin
+CFLAGS := -march=i386 -ffreestanding -Os --std=gnu11 -fbuiltin -nostdlib
 CFLAGS += -W -Wall -Wno-multichar -Wno-unused-parameter -Wno-unused-function -Wno-unused-label -Werror=return-type -Wno-nonnull-compare
 CFLAGS += -Werror-implicit-function-declaration -Wstrict-prototypes -Wwrite-strings
+ifeq ($(USE_LTO),1)
+CFLAGS += -flto
+endif
 INCLUDES := -Iinclude
 
 # a particular usb floppy drive that I have for testing on real hardware
@@ -73,11 +78,11 @@ $(IMAGE): $(BOOTBLOCK).bin $(KERNEL).bin $(MAKEFLOP)
 
 $(BOOTBLOCK): $(BOOT_OBJS) bootblock.ld
 	@$(MKDIR)
-	$(LD) -T bootblock.ld $(BOOT_OBJS) -o $@
+	$(CC) $(CFLAGS) -T bootblock.ld $(BOOT_OBJS) -o $@
 
 $(KERNEL): $(KERNEL_OBJS) kernel.ld
 	@$(MKDIR)
-	$(LD) -T kernel.ld $(KERNEL_OBJS) -o $@ $(LIBGCC)
+	$(CC) $(CFLAGS) -T kernel.ld $(KERNEL_OBJS) -o $@ $(LIBGCC)
 
 $(MAKEFLOP): makeflop.c
 	@$(MKDIR)
