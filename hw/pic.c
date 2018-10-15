@@ -52,11 +52,6 @@
 
 #define PIC_EOI         0x20        /* End-of-interrupt command code */
 
-static inline void io_wait(void) {
-    // Port 0x80 is used for 'checkpoints' during POST.
-    asm volatile ( "outb %%al, $0x80" : : "a"(0) );
-}
-
 // arguments:
 //     offset1 - vector offset for master PIC
 //         vectors on the master become offset1..offset1+7

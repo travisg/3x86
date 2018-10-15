@@ -24,6 +24,6 @@
 
 #include <stdint.h>
 
-void pit_init(void);
+// time in milliseconds since boot
+uint32_t current_time(void);
 
-void pit_irq(void);

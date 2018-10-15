@@ -23,6 +23,7 @@
 #include <hw/pit.h>
 
 #include <stdio.h>
+#include <time.h>
 #include <hw/pc.h>
 #include <hw/pic.h>
 #include <x86/x86.h>
@@ -74,6 +75,8 @@ void pit_init(void) {
     pic_set_mask(IRQ_PIT, false);
 
     x86_irq_restore(flags);
+
+    printf("PIT started at %u Hz\n", PIT_HZ);
 }
 
 // ticks at 100Hz

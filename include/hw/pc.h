@@ -25,3 +25,8 @@
 // common definitions for PC hardware
 #define IRQ_PIT         0
 
+static inline void io_wait(void) {
+    // Port 0x80 is used for 'checkpoints' during POST.
+    asm volatile ( "outb %%al, $0x80" : : "a"(0) );
+}
+
