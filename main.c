@@ -22,8 +22,8 @@
  */
 #include <stdint.h>
 #include <compiler.h>
-#include <console.h>
 #include <stdio.h>
+#include <hw/console.h>
 #include <x86/x86.h>
 
 struct e820 {

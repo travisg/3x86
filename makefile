@@ -17,12 +17,13 @@ BOOT_OBJS := bootblock.o
 BOOTBLOCK := $(BUILD_DIR)/bootblock
 
 KERNEL_OBJS := \
-	console.o \
 	main.o \
 	printf.o \
 	start.o \
 	stdio.o \
 	string.o \
+\
+	hw/console.o \
 \
 	x86/exceptions.o \
 	x86/tss.o \

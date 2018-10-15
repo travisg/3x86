@@ -22,9 +22,9 @@
  */
 #include <stdio.h>
 
-#include <console.h>
 #include <limits.h>
 #include <string.h>
+#include <hw/console.h>
 
 int putchar(int _c) {
     char c = _c;
