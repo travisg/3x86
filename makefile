@@ -5,6 +5,7 @@ CC := i386-elf-gcc
 LD := i386-elf-ld
 OBJDUMP := i386-elf-objdump
 OBJCOPY := i386-elf-objcopy
+SIZE := i386-elf-size
 
 CFLAGS := -march=i386 -ffreestanding -Os --std=gnu11 -fbuiltin -nostdlib
 CFLAGS += -W -Wall -Wno-multichar -Wno-unused-parameter -Wno-unused-function -Wno-unused-label -Werror=return-type -Wno-nonnull-compare
@@ -72,37 +73,38 @@ disk: $(IMAGE)
 		sudo dd if=$(IMAGE) of=$(FLOPPY_DEV) bs=512 conv=fdatasync; \
 	fi
 
-$(IMAGE): $(BOOTBLOCK).bin $(KERNEL).bin $(MAKEFLOP)
+$(IMAGE): $(BOOTBLOCK).bin $(KERNEL).bin $(MAKEFLOP) makefile
 	@$(MKDIR)
 	$(MAKEFLOP) $(BOOTBLOCK).bin $(KERNEL).bin $@
 
-$(BOOTBLOCK): $(BOOT_OBJS) bootblock.ld
+$(BOOTBLOCK): $(BOOT_OBJS) bootblock.ld makefile
 	@$(MKDIR)
 	$(CC) $(CFLAGS) -T bootblock.ld $(BOOT_OBJS) -o $@
 
-$(KERNEL): $(KERNEL_OBJS) kernel.ld
+$(KERNEL): $(KERNEL_OBJS) kernel.ld makefile
 	@$(MKDIR)
 	$(CC) $(CFLAGS) -T kernel.ld $(KERNEL_OBJS) -o $@ $(LIBGCC)
+	$(SIZE) $@
 
-$(MAKEFLOP): makeflop.c
+$(MAKEFLOP): makeflop.c makefile
 	@$(MKDIR)
 	cc -O -Wall $< -o $@
 
 %.ld:
 
-%.bin: %
+%.bin: % makefile
 	@$(MKDIR)
 	$(OBJCOPY) -Obinary $< $@
 
-%.lst: %
+%.lst: % makefile
 	@$(MKDIR)
 	$(OBJDUMP) -d -M i386 $< > $@
 
-$(BUILD_DIR)/%.o: %.S
+$(BUILD_DIR)/%.o: %.S makefile
 	@$(MKDIR)
 	$(CC) $(INCLUDES) -c $< -MD -MP -MT $@ -MF $(@:%o=%d) -o $@
 
-$(BUILD_DIR)/%.o: %.c
+$(BUILD_DIR)/%.o: %.c makefile
 	@$(MKDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -MD -MP -MT $@ -MF $(@:%o=%d) -o $@
 
