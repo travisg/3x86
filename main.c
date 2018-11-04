@@ -24,6 +24,7 @@
 #include <compiler.h>
 #include <stdio.h>
 #include <task.h>
+#include <time.h>
 #include <hw/console.h>
 #include <hw/pic.h>
 #include <hw/pit.h>
@@ -91,8 +92,15 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
 
 static void task_test_routine(void *arg) {
     int c = (int)arg;
-    for (;;) {
-        printf("%c", c);
+    uint32_t start = current_time();
+
+    for (int count = 0;; count++) {
+        uint32_t now = current_time();
+        if (unlikely(now - start >= 1000)) {
+            printf("%d switches per second\n", count);
+            start = now;
+            count = 0;
+        }
         task_reschedule();
     }
 }

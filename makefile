@@ -1,5 +1,5 @@
 
-USE_LTO ?= 0
+USE_LTO ?= 1
 
 CC := i386-elf-gcc
 LD := i386-elf-ld

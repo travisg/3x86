@@ -114,6 +114,7 @@ int x86_init_task_tss(struct x86_tss *tss, int *tss_slot, uintptr_t entry_point,
 
     memset(tss, 0, sizeof(*tss));
 
+    tss->eflags = (1<<9); // interrupts enabled
     tss->eip = entry_point;
     tss->esp = sp;
     tss->cs = CODE_SELECTOR;
