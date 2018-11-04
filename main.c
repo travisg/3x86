@@ -23,10 +23,13 @@
 #include <stdint.h>
 #include <compiler.h>
 #include <stdio.h>
+#include <task.h>
 #include <hw/console.h>
 #include <hw/pic.h>
 #include <hw/pit.h>
 #include <x86/x86.h>
+
+static void task_test_routine(void *);
 
 struct e820 {
     uint64_t base;      // 0x0
@@ -56,15 +59,28 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
 
     dump_e820(ext_mem_block, ext_mem_count);
 
-    // initialize hardware
+    // initialize early hardware
     pic_init();
     pit_init();
 
-    extern void tss_test(void);
-    tss_test();
+    // initialize the tasking subsystem
+    task_init();
+
+    //extern void tss_test(void);
+    //tss_test();
+
+    static task_t a, b;
+    static uint32_t stack_a[128], stack_b[128];
+    task_create(&a, "a", &task_test_routine, (void *)'a', (uintptr_t)stack_a, sizeof(stack_a));
+    task_create(&b, "b", &task_test_routine, (void *)'b', (uintptr_t)stack_b, sizeof(stack_b));
+
+    task_start(&a);
+    task_start(&b);
 
     printf("Enabling interrupts\n");
     x86_sti();
+
+    task_reschedule();
 
     printf("Reached the end, spinning forever...\n");
     x86_cli();
@@ -73,3 +89,10 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
     }
 }
 
+static void task_test_routine(void *arg) {
+    int c = (int)arg;
+    for (;;) {
+        printf("%c", c);
+        task_reschedule();
+    }
+}

@@ -24,11 +24,17 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <task.h>
 
-struct x86_tss kernel_tss;
+static struct x86_tss kernel_tss;
+
+static uint32_t tss_slot_bitmap = 0;
+_Static_assert(sizeof(tss_slot_bitmap) * 8 >= TASK_TSS_SELECTOR_COUNT, "");
 
 void x86_tss_init(void) {
     // initialize the kernel tss and switch to it
+
+    printf("kernel tss %p\n", &kernel_tss);
 
     // punch in the address of the kernel_tss
     struct x86_desc_32 *kernel_tss_gdt = &gdt[KERNEL_TSS_SELECTOR / 8];
@@ -41,20 +47,22 @@ void x86_tss_init(void) {
     __asm__ volatile("ltr %0" :: "r"((uint16_t)KERNEL_TSS_SELECTOR) : "memory");
 }
 
-void init_task_tss(struct x86_tss *tss, uintptr_t entry_point, uint32_t sp) {
-    memset(tss, 0, sizeof(*tss));
-
-    tss->eip = entry_point;
-    tss->esp = sp;
-    tss->cs = CODE_SELECTOR;
-    tss->ss = DATA_SELECTOR;
-    tss->ds = DATA_SELECTOR;
-    tss->es = DATA_SELECTOR;
-    tss->fs = DATA_SELECTOR;
-    tss->gs = DATA_SELECTOR;
+static int alloc_tss_slot(void) {
+    for (int i = 0; i < TASK_TSS_SELECTOR_COUNT; i++) {
+        uint32_t mask = (1u << i);
+        if ((tss_slot_bitmap & mask) == 0) {
+            tss_slot_bitmap |= mask;
+            return i;
+        }
+    }
+    return -1;
 }
 
-void set_tss_gdt_entry(unsigned int tss_slot, struct x86_tss *tss) {
+static void free_tss_slot(int slot) {
+    tss_slot_bitmap &= ~(1u << slot);
+}
+
+static void set_tss_gdt_entry(unsigned int tss_slot, struct x86_tss *tss) {
     struct x86_desc_32 *tss_gdt = &gdt[TASK_TSS_SELECTOR_BASE / 8 + tss_slot];
 
     tss_gdt->seg_limit_15_0 = sizeof(*tss) - 1;
@@ -66,9 +74,9 @@ void set_tss_gdt_entry(unsigned int tss_slot, struct x86_tss *tss) {
 }
 
 __asm__(
-"test_func:\n"
-"ljmp $0x28,$0\n"
-"ret\n"
+    "test_func:\n"
+    "ljmp $0x28,$0\n"
+    "ret\n"
 );
 
 void tss_test(void) {
@@ -77,12 +85,59 @@ void tss_test(void) {
     // set up a temporary task, switch to it and back
     static struct x86_tss test_tss;
     extern void test_func(void);
-    init_task_tss(&test_tss, (uintptr_t)&test_func, 0);
-    set_tss_gdt_entry(0, &test_tss);
-    printf("tss is set up, switching\n");
+    int slot;
+    x86_init_task_tss(&test_tss, &slot, (uintptr_t)&test_func, 0);
 
-    __asm__ volatile("ljmp %0,$0\n" :: "i"(TASK_TSS_SELECTOR_BASE) : "memory");
+    set_tss_gdt_entry(slot, &test_tss);
+    printf("tss is set up using slot %d, switching\n", slot);
+
+    // put a far pointer on the stack and branch to it
+    struct {
+        uint32_t addr;
+        uint16_t seg;
+    } __PACKED addr;
+    addr.seg = TASK_TSS_SELECTOR_BASE + slot * 8;
+    addr.addr = 0;
+
+    __asm__ volatile("ljmp *%0\n" :: "m"(addr) : "memory");
     printf("switched back\n");
+
+    free_tss_slot(slot);
 
     printf("bottom of tss_test\n");
 }
+
+int x86_init_task_tss(struct x86_tss *tss, int *tss_slot, uintptr_t entry_point, uint32_t sp) {
+    *tss_slot = alloc_tss_slot();
+    if (*tss_slot < 0)
+        return -1;
+
+    memset(tss, 0, sizeof(*tss));
+
+    tss->eip = entry_point;
+    tss->esp = sp;
+    tss->cs = CODE_SELECTOR;
+    tss->ss = DATA_SELECTOR;
+    tss->ds = DATA_SELECTOR;
+    tss->es = DATA_SELECTOR;
+    tss->fs = DATA_SELECTOR;
+    tss->gs = DATA_SELECTOR;
+
+    set_tss_gdt_entry(*tss_slot, tss);
+
+    return 0;
+}
+
+void x86_task_switch_to(struct task *task) {
+    //printf("x86 switch to %p\n", task);
+
+    struct {
+        uint32_t addr;
+        uint16_t seg;
+    } __PACKED addr;
+    addr.seg = TASK_TSS_SELECTOR_BASE + task->tss_slot * 8;
+    addr.addr = 0;
+
+    __asm__ volatile("ljmp *%0\n" :: "m"(addr) : "memory");
+}
+

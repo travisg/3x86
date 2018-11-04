@@ -113,7 +113,7 @@ void pic_set_mask(unsigned char irq, bool set) {
 }
 
 void pic_send_eoi(unsigned char irq) {
-    if(irq >= 8) {
+    if (irq >= 8) {
         outp(PIC2_CMD, PIC_EOI);
     }
 

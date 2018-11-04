@@ -67,7 +67,7 @@ struct x86_desc_32 gdt[GDT_COUNT] = {
     },
     {
         // kernel TSS descriptor (0x28)
-        sizeof(kernel_tss),           // limit 15:00
+        0,                // limit 15:00
         0x0000,           // base 15:00
         0x00,             // base 23:16
         0b10001001,       // P(1) DPL(00) S(0) 1 0 B(0) 1

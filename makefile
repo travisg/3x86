@@ -1,5 +1,5 @@
 
-USE_LTO ?= 1
+USE_LTO ?= 0
 
 CC := i386-elf-gcc
 LD := i386-elf-ld
@@ -31,6 +31,7 @@ KERNEL_OBJS := \
 	start.o \
 	stdio.o \
 	string.o \
+	task.o \
 \
 	hw/console.o \
 	hw/pic.o \
@@ -60,7 +61,7 @@ clean:
 
 .PHONY: qemu
 qemu: all
-	qemu-system-i386 --monitor stdio --machine isapc --cpu 486 -m 4 -fda $(IMAGE)
+	qemu-system-i386 --monitor stdio --machine isapc --cpu 486 -m 4 -fda $(IMAGE) # -d cpu,exec
 
 .PHONY: format
 format:

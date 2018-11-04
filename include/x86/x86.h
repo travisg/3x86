@@ -32,9 +32,9 @@
 #define USER_DATA_32_SELECTOR   (0x20 | 3)
 #define KERNEL_TSS_SELECTOR 0x28
 
-// space for up to 16 tasks
+// space for up to 32 tasks
 #define TASK_TSS_SELECTOR_BASE 0x30
-#define TASK_TSS_SELECTOR_COUNT 16
+#define TASK_TSS_SELECTOR_COUNT 32
 
 #define GDT_COUNT (6 + TASK_TSS_SELECTOR_COUNT)
 
@@ -253,10 +253,13 @@ static inline void outpd(uint16_t _port, uint32_t _data) {
 
 // global data
 extern struct x86_desc_32 gdt[];
-extern struct x86_tss kernel_tss;
 
 // functions
 void x86_init(void);
 void x86_tss_init(void);
+
+int x86_init_task_tss(struct x86_tss *tss, int *tss_slot, uintptr_t entry_point, uint32_t sp);
+struct task;
+void x86_task_switch_to(struct task *task);
 
 #endif
