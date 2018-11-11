@@ -32,8 +32,7 @@ typedef struct task {
     uintptr_t stack;
     size_t stack_size;
 
-    int tss_slot;
-    struct x86_tss tss;
+    uintptr_t saved_sp;
 } task_t;
 
 void task_init(void);

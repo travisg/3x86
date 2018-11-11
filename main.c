@@ -67,9 +67,6 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
     // initialize the tasking subsystem
     task_init();
 
-    //extern void tss_test(void);
-    //tss_test();
-
     static task_t a, b;
     static uint32_t stack_a[128], stack_b[128];
     task_create(&a, "a", &task_test_routine, (void *)'a', (uintptr_t)stack_a, sizeof(stack_a));

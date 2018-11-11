@@ -32,18 +32,12 @@
 #define USER_DATA_32_SELECTOR   (0x20 | 3)
 #define KERNEL_TSS_SELECTOR 0x28
 
-// space for up to 32 tasks
-#define TASK_TSS_SELECTOR_BASE 0x30
-#define TASK_TSS_SELECTOR_COUNT 32
-
-#define GDT_COUNT (6 + TASK_TSS_SELECTOR_COUNT)
+#define GDT_COUNT           6
 
 // only implement 0x30 interrupts for now
 #define NUM_INT             0x30
 
 #ifndef __ASSEMBLER__
-
-_Static_assert(TASK_TSS_SELECTOR_BASE / 8 + TASK_TSS_SELECTOR_COUNT == GDT_COUNT, "");
 
 #include <compiler.h>
 #include <stdint.h>
@@ -123,6 +117,15 @@ struct x86_tss {
 } __PACKED;
 
 _Static_assert(sizeof(struct x86_tss) == 0x68, "");
+
+// state that x86_asm_switch() uses
+struct context_switch_frame {
+    uint32_t edi;
+    uint32_t esi;
+    uint32_t ebp;
+    uint32_t ebx;
+    uintptr_t return_address;
+};
 
 static inline void x86_clts(void) {__asm__ __volatile__ ("clts"); }
 static inline void x86_hlt(void) {__asm__ __volatile__ ("hlt"); }
@@ -258,8 +261,10 @@ extern struct x86_desc_32 gdt[];
 void x86_init(void);
 void x86_tss_init(void);
 
-int x86_init_task_tss(struct x86_tss *tss, int *tss_slot, uintptr_t entry_point, uint32_t sp);
 struct task;
-void x86_task_switch_to(struct task *task);
+int x86_init_task(struct task *task, uintptr_t entry_point, uint32_t sp);
+void x86_task_switch(struct task *old, struct task *task);
+__FASTCALL void x86_asm_switch(uint32_t *old_sp, uint32_t new_sp);
+
 
 #endif

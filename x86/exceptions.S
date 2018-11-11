@@ -24,12 +24,7 @@
  */
 
 #include <x86/x86.h>
-
-#define FUNCTION(x) .global x; .type x,STT_FUNC; x:
-#define DATA(x) .global x; .type x,STT_OBJECT; x:
-
-#define LOCAL_FUNCTION(x) .type x,STT_FUNC; x:
-#define LOCAL_DATA(x) .type x,STT_OBJECT; x:
+#include <asm.h>
 
 // define a table of up to 256 interrupt routines that push the irq number
 // and branch to a common routine.

@@ -26,18 +26,20 @@
 #include <string.h>
 #include <task.h>
 
-static struct x86_tss kernel_tss;
+int x86_init_task(struct task *task, uintptr_t entry_point, uint32_t sp) {
+    struct context_switch_frame *frame = (void *)(sp - sizeof(struct context_switch_frame));
+    frame->edi = frame->esi = frame->ebp = frame->ebx = 0;
+    frame->return_address = entry_point;
 
-void x86_tss_init(void) {
-    // initialize the kernel tss and switch to it
+    task->saved_sp = (uint32_t)frame;
+    //printf("initializing task %p, entry %#lx, sp %#lx, saved sp %#lx\n", task, entry_point, sp, task->saved_sp);
 
-    // punch in the address of the kernel_tss
-    struct x86_desc_32 *kernel_tss_gdt = &gdt[KERNEL_TSS_SELECTOR / 8];
-    kernel_tss_gdt->seg_limit_15_0 = sizeof(kernel_tss) - 1;
-    kernel_tss_gdt->base_15_0 = ((uintptr_t)&kernel_tss) & 0xffff;
-    kernel_tss_gdt->base_23_16 = (((uintptr_t)&kernel_tss) >> 16) & 0xff;
-    kernel_tss_gdt->base_31_24 = (((uintptr_t)&kernel_tss) >> 24) & 0xff;
-
-    // use ltr to load the kernel task register
-    __asm__ volatile("ltr %0" :: "r"((uint16_t)KERNEL_TSS_SELECTOR) : "memory");
+    return 0;
 }
+
+void x86_task_switch(struct task *old, struct task *task) {
+    //printf("x86 switch from %p to %p (new saved sp %#lx)\n", old, task, task->saved_sp);
+
+    x86_asm_switch(&old->saved_sp, task->saved_sp);
+}
+

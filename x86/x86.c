@@ -74,7 +74,6 @@ struct x86_desc_32 gdt[GDT_COUNT] = {
         0b10000000,       // G(1) 0 0 0 limit 19:16
         0x0               // base 31:24
     },
-    // 0x30+ are available user TSS descriptors
 };
 
 static struct x86_gate_desc_32 idt[NUM_INT];

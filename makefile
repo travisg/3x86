@@ -38,6 +38,8 @@ KERNEL_OBJS := \
 	hw/pit.o \
 \
 	x86/exceptions.o \
+	x86/task.o \
+	x86/task_asm.o \
 	x86/tss.o \
 	x86/x86.o
 
@@ -61,7 +63,7 @@ clean:
 
 .PHONY: qemu
 qemu: all
-	qemu-system-i386 --monitor stdio --machine isapc --cpu 486 -m 4 -fda $(IMAGE) # -d cpu,exec
+	qemu-system-i386 --monitor stdio --machine isapc --cpu 486 -m 4 -fda $(IMAGE) -no-shutdown
 
 .PHONY: format
 format:

@@ -41,6 +41,8 @@ static void idle_loop(void *arg) {
 }
 
 static void task_trampoline(void) {
+    x86_sti();
+
     printf("top of task %p\n", current_task);
     current_task->entry(current_task->arg);
     task_exit();
@@ -56,6 +58,10 @@ void task_init(void) {
     printf("initializing tasks\n");
 
     task_create(&idle_task, "idle", &idle_loop, 0, (uintptr_t)idle_stack, sizeof(idle_stack));
+
+    // HACK to put us in some sort of context
+    static task_t initial_kernel_task;
+    current_task = &initial_kernel_task;
 }
 
 status_t task_create(task_t *t, const char *name, void (*entry)(void *), void *arg, uintptr_t stack, size_t stack_size) {
@@ -65,7 +71,7 @@ status_t task_create(task_t *t, const char *name, void (*entry)(void *), void *a
     t->stack = stack;
     t->stack_size = stack_size;
 
-    if (x86_init_task_tss(&t->tss, &t->tss_slot, (uintptr_t)task_trampoline, t->stack + t->stack_size) < 0) {
+    if (x86_init_task(t, (uintptr_t)task_trampoline, t->stack + t->stack_size) < 0) {
         return -1;
     }
 
@@ -85,6 +91,7 @@ status_t task_start(task_t *t) {
 void task_reschedule(void) {
     x86_flags_t flags = x86_irq_disable();
 
+    task_t *old_task = current_task;
     task_t *next_task;
 
     if (current_task == slot_a) {
@@ -94,7 +101,7 @@ void task_reschedule(void) {
     }
 
     current_task = next_task;
-    x86_task_switch_to(next_task);
+    x86_task_switch(old_task, next_task);
 
     x86_irq_restore(flags);
 }

@@ -20,9 +20,10 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+#include <asm.h>
+
 .section .text.boot
-.globl _start
-_start:
+FUNCTION(_start)
     // zero out bss
     mov     $_end, %ecx
     mov     $__bss_start, %edi
@@ -46,8 +47,6 @@ _start:
 
 .bss
 .balign 4
-.globl start_heap
-start_heap:
+DATA(start_heap)
     .skip 4096
-.global start_heap_end
-start_heap_end:
+DATA(start_heap_end)
