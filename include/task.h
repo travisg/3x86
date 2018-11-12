@@ -22,10 +22,20 @@
  */
 #pragma once
 
+#include <list.h>
 #include <sys/types.h>
 #include <x86/x86.h>
 
 typedef struct task {
+    struct list_node node;
+
+    enum state {
+        INITIAL,
+        READY,
+        RUNNING,
+        DEAD
+    } state;
+
     void (*entry)(void *);
     void *arg;
 
@@ -36,8 +46,10 @@ typedef struct task {
 } task_t;
 
 void task_init(void);
+void task_become_idle(void);
 
 status_t task_create(task_t *t, const char *name, void (*entry)(void *), void *arg, uintptr_t stack, size_t stack_size);
 status_t task_start(task_t *t);
-void task_exit(void);
+void task_exit(void) __NO_RETURN;
 void task_reschedule(void);
+

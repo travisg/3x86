@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Travis Geiselbrecht
+ * Copyright (c) 2008-2013 Travis Geiselbrecht
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files
@@ -20,27 +20,24 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <asm.h>
+#ifndef __TRACE_H
+#define __TRACE_H
 
-.section .text.boot
-FUNCTION(_start)
-    // zero out bss
-    mov     $_end, %ecx
-    mov     $__bss_start, %edi
-    sub     %edi, %ecx
+#include <stdio.h>
 
-    xor     %eax, %eax
-    rep     stosb
+/* trace routines */
+#define TRACE_ENTRY printf("%s: entry\n", __PRETTY_FUNCTION__)
+#define TRACE_EXIT printf("%s: exit\n", __PRETTY_FUNCTION__)
+#define TRACE_ENTRY_OBJ printf("%s: entry obj %p\n", __PRETTY_FUNCTION__, this)
+#define TRACE_EXIT_OBJ printf("%s: exit obj %p\n", __PRETTY_FUNCTION__, this)
+#define TRACE printf("%s:%d\n", __PRETTY_FUNCTION__, __LINE__)
+#define TRACEF(str, x...) do { printf("%s:%d: " str, __PRETTY_FUNCTION__, __LINE__, ## x); } while (0)
 
-    // switch to the new stack and move 5 args from the old
-    mov     %esp, %eax
-    mov     $idle_stack + 512, %esp
-    pushl   0x14(%eax)
-    pushl   0x10(%eax)
-    pushl   0xc(%eax)
-    pushl   0x8(%eax)
-    pushl   0x4(%eax)
+/* trace routines that work if LOCAL_TRACE is set */
+#define LTRACE_ENTRY do { if (LOCAL_TRACE) { TRACE_ENTRY; } } while (0)
+#define LTRACE_EXIT do { if (LOCAL_TRACE) { TRACE_EXIT; } } while (0)
+#define LTRACE do { if (LOCAL_TRACE) { TRACE; } } while (0)
+#define LTRACEF(x...) do { if (LOCAL_TRACE) { TRACEF(x); } } while (0)
+#define LTRACEF_LEVEL(level, x...) do { if (LOCAL_TRACE >= (level)) { TRACEF(x); } } while (0)
 
-    // call into C
-    call     _start_c
-    jmp     .
+#endif

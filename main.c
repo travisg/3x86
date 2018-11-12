@@ -32,6 +32,10 @@
 
 static void task_test_routine(void *);
 
+static task_t boot_thread;
+static uint32_t boot_stack[128];
+static void main2(void *arg);
+
 struct e820 {
     uint64_t base;      // 0x0
     uint64_t len;       // 0x8
@@ -67,37 +71,18 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
     // initialize the tasking subsystem
     task_init();
 
-    static task_t a, b;
-    static uint32_t stack_a[128], stack_b[128];
-    task_create(&a, "a", &task_test_routine, (void *)'a', (uintptr_t)stack_a, sizeof(stack_a));
-    task_create(&b, "b", &task_test_routine, (void *)'b', (uintptr_t)stack_b, sizeof(stack_b));
+    // create the boot completion thread
+    task_create(&boot_thread, "boot", &main2, NULL, (uintptr_t)boot_stack, sizeof(boot_stack));
+    task_start(&boot_thread);
 
-    task_start(&a);
-    task_start(&b);
-
-    printf("Enabling interrupts\n");
-    x86_sti();
-
-    task_reschedule();
-
-    printf("Reached the end, spinning forever...\n");
-    x86_cli();
-    for (;;) {
-        x86_hlt();
-    }
+    // kick off the scheduler and become the idle thread
+    task_become_idle();
 }
 
-static void task_test_routine(void *arg) {
-    int c = (int)arg;
-    uint32_t start = current_time();
+void main2(void *arg) {
+    printf("top of secondary boot thread\n");
 
-    for (int count = 0;; count++) {
-        uint32_t now = current_time();
-        if (unlikely(now - start >= 1000)) {
-            printf("%d switches per second\n", count);
-            start = now;
-            count = 0;
-        }
-        task_reschedule();
-    }
+    // TODO: initialize additional drivers and subsystems here
+
+    printf("secondary boot thread exiting\n");
 }

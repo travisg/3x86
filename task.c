@@ -22,87 +22,138 @@
  */
 #include <task.h>
 
+#include <compiler.h>
 #include <stdio.h>
 #include <string.h>
+#include <trace.h>
 #include <x86/x86.h>
 
+#define LOCAL_TRACE 0
+
 static task_t idle_task;
-static uint8_t idle_stack[256];
+uint8_t idle_stack[512] __ALIGNED(4);
 
 static task_t *current_task;
+static struct list_node run_queue;
 
-static task_t *slot_a;
-static task_t *slot_b;
+// called once at boot by the initial start routine to exit the single threaded phase
+// of bootup and start the scheduler.
+void task_become_idle(void) {
+    printf("starting multitasking\n");
 
-static void idle_loop(void *arg) {
+    // kick off the scheduler once
+    task_reschedule();
+
+    // drop into idle loop
+    x86_sti();
     for (;;) {
         x86_hlt();
     }
 }
 
+// called once at startup to initialize the tasking subsystem
+void task_init(void) {
+    LTRACEF("initializing tasks\n");
+
+    list_initialize(&run_queue);
+
+    // create the idle task and set it as the current
+    task_create(&idle_task, "idle", NULL, 0, (uintptr_t)idle_stack, sizeof(idle_stack));
+    current_task = &idle_task;
+}
+
+// initial routine run by every new task
 static void task_trampoline(void) {
+    // reenable interrupts, since they were implicitly disabled by the reschedule routine
     x86_sti();
 
-    printf("top of task %p\n", current_task);
+    LTRACEF("top of task %p\n", current_task);
+
+    // call the entry point
     current_task->entry(current_task->arg);
+
+    // fall through to exit
     task_exit();
 }
 
 void task_exit(void) {
-    printf("exiting task %p\n", current_task);
-    // XXX actually do it
-    for (;;);
-}
+    LTRACEF("exiting task %p\n", current_task);
 
-void task_init(void) {
-    printf("initializing tasks\n");
+    x86_cli();
 
-    task_create(&idle_task, "idle", &idle_loop, 0, (uintptr_t)idle_stack, sizeof(idle_stack));
+    // set ourselves to the DEAD state and reschedule
+    // the scheduler wont put us back in the run queue
+    current_task->state = DEAD;
+    task_reschedule();
 
-    // HACK to put us in some sort of context
-    static task_t initial_kernel_task;
-    current_task = &initial_kernel_task;
+    // never get here
+    __UNREACHABLE;
 }
 
 status_t task_create(task_t *t, const char *name, void (*entry)(void *), void *arg, uintptr_t stack, size_t stack_size) {
+    // initialize the sructure
+    list_clear_node(&t->node);
+    t->state = INITIAL;
     t->entry = entry;
     t->arg = arg;
-
     t->stack = stack;
     t->stack_size = stack_size;
 
-    if (x86_init_task(t, (uintptr_t)task_trampoline, t->stack + t->stack_size) < 0) {
+    // get the x86 layer to initialize its part
+    status_t err = x86_init_task(t, (uintptr_t)task_trampoline, t->stack + t->stack_size);
+    if (err < 0) {
+        return err;
+    }
+
+    return 0;
+}
+
+// move the task from the initial state and put it in the run queue
+status_t task_start(task_t *t) {
+    x86_flags_t flags = x86_irq_disable();
+
+    if (t->state != INITIAL) {
+        x86_irq_restore(flags);
         return -1;
     }
 
-    return 0;
-}
+    t->state = READY;
+    list_add_head(&run_queue, &t->node);
 
-status_t task_start(task_t *t) {
-    if (!slot_a) {
-        slot_a = t;
-    } else if (!slot_b) {
-        slot_b = t;
-    }
+    x86_irq_restore(flags);
 
     return 0;
 }
 
+// see if a new task is ready to run
 void task_reschedule(void) {
     x86_flags_t flags = x86_irq_disable();
 
     task_t *old_task = current_task;
     task_t *next_task;
 
-    if (current_task == slot_a) {
-        next_task = slot_b;
-    } else {
-        next_task = slot_a;
+    // if the old one is running, put it back in the run queue
+    if (current_task->state == RUNNING) {
+        current_task->state = READY;
+        list_add_tail(&run_queue, &current_task->node);
+    }
+
+    // find a new thread to run from the run queue
+    next_task = list_remove_head_type(&run_queue, struct task, node);
+    if (!next_task) {
+        // if nothing in the queue, pick the idle task
+        next_task = &idle_task;
+    }
+
+    if (next_task == old_task) {
+        goto out;
     }
 
     current_task = next_task;
+    current_task->state = RUNNING;
     x86_task_switch(old_task, next_task);
 
+out:
     x86_irq_restore(flags);
 }
 
