@@ -153,7 +153,7 @@ static void exception_die(struct x86_iframe *frame, const char *msg) {
     }
 }
 
-void x86_exception_handler(struct x86_iframe *iframe) {
+__FASTCALL void x86_exception_handler(struct x86_iframe *iframe) {
 
     switch (iframe->vector) {
         case 0x20 ... 0x2f: // PIC interrupts

@@ -65,12 +65,9 @@ FUNCTION(x86_interrupt_common)
     movl %eax, %es
     movl %eax, %ds
 
-    movl %esp, %eax         // store pointer to iframe
-    pushl %eax
-
+    // call the C level exception handling code using fastcall
+    movl %esp, %ecx         // store pointer to iframe
     call x86_exception_handler
-
-    popl %eax               // drop pointer to iframe
 
     popa                    // restore general purpose registers
     popl %ds                // restore segment registers
