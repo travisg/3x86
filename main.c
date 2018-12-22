@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <debug.h>
 #include <compiler.h>
+#include <heap.h>
 #include <stdio.h>
 #include <task.h>
 #include <time.h>
@@ -33,8 +34,6 @@
 
 static void task_test_routine(void *);
 
-static task_t boot_thread;
-static uint32_t boot_stack[128];
 static void main2(void *arg);
 
 struct e820 {
@@ -72,9 +71,14 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
     // initialize the tasking subsystem
     task_init();
 
+    // initialize the heap
+    heap_init();
+
     // create the boot completion thread
-    task_create(&boot_thread, "boot", &main2, NULL, (uintptr_t)boot_stack, sizeof(boot_stack));
-    task_start(&boot_thread);
+    task_t *boot_thread = malloc(sizeof(task_t));
+    uint8_t *boot_stack = malloc(512);
+    task_create(boot_thread, "boot", &main2, NULL, (uintptr_t)boot_stack, 512);
+    task_start(boot_thread);
 
     // kick off the scheduler and become the idle thread
     task_become_idle();
@@ -84,6 +88,7 @@ void main2(void *arg) {
     printf("top of secondary boot thread\n");
 
     // TODO: initialize additional drivers and subsystems here
+    heap_dump();
 
     printf("secondary boot thread exiting\n");
 }

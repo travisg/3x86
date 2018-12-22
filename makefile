@@ -28,7 +28,9 @@ BOOTBLOCK := $(BUILD_DIR)/bootblock
 KERNEL_OBJS := \
 	ctype.o \
 	debug.o \
+	heap.o \
 	main.o \
+	miniheap.o \
 	printf.o \
 	start.o \
 	stdio.o \
