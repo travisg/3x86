@@ -26,6 +26,8 @@ BOOT_OBJS := bootblock.o
 BOOTBLOCK := $(BUILD_DIR)/bootblock
 
 KERNEL_OBJS := \
+	ctype.o \
+	debug.o \
 	main.o \
 	printf.o \
 	start.o \

@@ -21,6 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <stdint.h>
+#include <debug.h>
 #include <compiler.h>
 #include <stdio.h>
 #include <task.h>
