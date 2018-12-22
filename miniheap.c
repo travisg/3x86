@@ -110,13 +110,11 @@ struct alloc_struct_begin {
 
 static ssize_t heap_grow(size_t len);
 
-static void dump_free_chunk(struct free_heap_chunk *chunk)
-{
+static void dump_free_chunk(struct free_heap_chunk *chunk) {
     dprintf(INFO, "\t\tbase %p, end 0x%lx, len 0x%zx\n", chunk, (vaddr_t)chunk + chunk->len, chunk->len);
 }
 
-void miniheap_dump(void)
-{
+void miniheap_dump(void) {
     dprintf(INFO, "Heap dump (using miniheap):\n");
     dprintf(INFO, "\tbase %p, len 0x%zx\n", theheap.base, theheap.len);
     dprintf(INFO, "\tfree list:\n");
@@ -133,8 +131,7 @@ void miniheap_dump(void)
 
 // try to insert this free chunk into the free list, consuming the chunk by merging it with
 // nearby ones if possible. Returns base of whatever chunk it became in the list.
-static struct free_heap_chunk *heap_insert_free_chunk(struct free_heap_chunk *chunk)
-{
+static struct free_heap_chunk *heap_insert_free_chunk(struct free_heap_chunk *chunk) {
 #if LK_DEBUGLEVEL > INFO
     vaddr_t chunk_end = (vaddr_t)chunk + chunk->len;
 #endif
@@ -195,13 +192,13 @@ try_merge:
     return chunk;
 }
 
-static struct free_heap_chunk *heap_create_free_chunk(void *ptr, size_t len, bool allow_debug)
-{
+static struct free_heap_chunk *heap_create_free_chunk(void *ptr, size_t len, bool allow_debug) {
     DEBUG_ASSERT((len % sizeof(void *)) == 0); // size must be aligned on pointer boundary
 
 #if DEBUG_HEAP
-    if (allow_debug)
+    if (allow_debug) {
         memset(ptr, FREE_FILL, len);
+    }
 #endif
 
     struct free_heap_chunk *chunk = (struct free_heap_chunk *)ptr;
@@ -210,8 +207,7 @@ static struct free_heap_chunk *heap_create_free_chunk(void *ptr, size_t len, boo
     return chunk;
 }
 
-void *miniheap_alloc(size_t size, unsigned int alignment)
-{
+void *miniheap_alloc(size_t size, unsigned int alignment) {
     void *ptr;
 #if DEBUG_HEAP
     size_t original_size = size;
@@ -220,8 +216,9 @@ void *miniheap_alloc(size_t size, unsigned int alignment)
     LTRACEF("size %zd, align %d\n", size, alignment);
 
     // alignment must be power of 2
-    if (alignment & (alignment - 1))
+    if (alignment & (alignment - 1)) {
         return NULL;
+    }
 
     // we always put a size field + base pointer + magic in front of the allocation
     size += sizeof(struct alloc_struct_begin);
@@ -232,16 +229,18 @@ void *miniheap_alloc(size_t size, unsigned int alignment)
     // make sure we allocate at least the size of a struct free_heap_chunk so that
     // when we free it, we can create a struct free_heap_chunk struct and stick it
     // in the spot
-    if (size < sizeof(struct free_heap_chunk))
+    if (size < sizeof(struct free_heap_chunk)) {
         size = sizeof(struct free_heap_chunk);
+    }
 
     // round up size to a multiple of native pointer size
     size = ROUNDUP(size, sizeof(void *));
 
     // deal with nonzero alignments
     if (alignment > 0) {
-        if (alignment < 16)
+        if (alignment < 16) {
             alignment = 16;
+        }
 
         // add alignment for worst case fit
         size += alignment;
@@ -273,10 +272,11 @@ retry:
                 chunk->len -= chunk->len - size;
 
                 // add the new one where chunk used to be
-                if (next_node)
+                if (next_node) {
                     list_add_before(next_node, &newchunk->node);
-                else
+                } else {
                     list_add_tail(&theheap.free_list, &newchunk->node);
+                }
             }
 
             // the allocated size is actually the length of this chunk, not the size requested
@@ -334,11 +334,11 @@ retry:
     return ptr;
 }
 
-void *miniheap_realloc(void *ptr, size_t size)
-{
+void *miniheap_realloc(void *ptr, size_t size) {
     /* slow implementation */
-    if (!ptr)
+    if (!ptr) {
         return miniheap_alloc(size, 0);
+    }
     if (size == 0) {
         miniheap_free(ptr);
         return NULL;
@@ -346,8 +346,9 @@ void *miniheap_realloc(void *ptr, size_t size)
 
     // XXX better implementation
     void *p = miniheap_alloc(size, 0);
-    if (!p)
+    if (!p) {
         return NULL;
+    }
 
     memcpy(p, ptr, size); // XXX wrong
     miniheap_free(ptr);
@@ -355,10 +356,10 @@ void *miniheap_realloc(void *ptr, size_t size)
     return p;
 }
 
-void miniheap_free(void *ptr)
-{
-    if (!ptr)
+void miniheap_free(void *ptr) {
+    if (!ptr) {
         return;
+    }
 
     LTRACEF("ptr %p\n", ptr);
 
@@ -393,8 +394,7 @@ void miniheap_free(void *ptr)
 #endif
 }
 
-void miniheap_trim(void)
-{
+void miniheap_trim(void) {
     LTRACE_ENTRY;
 
     mutex_acquire(&theheap.lock);
@@ -486,8 +486,7 @@ free_chunk:
     mutex_release(&theheap.lock);
 }
 
-void miniheap_get_stats(struct miniheap_stats *ptr)
-{
+void miniheap_get_stats(struct miniheap_stats *ptr) {
     struct free_heap_chunk *chunk;
 
     ptr->heap_start = theheap.base;
@@ -510,8 +509,7 @@ void miniheap_get_stats(struct miniheap_stats *ptr)
     mutex_release(&theheap.lock);
 }
 
-static ssize_t heap_grow(size_t size)
-{
+static ssize_t heap_grow(size_t size) {
     size = ROUNDUP(size, PAGE_SIZE);
     void *ptr = page_alloc(size / PAGE_SIZE, PAGE_ALLOC_ANY_ARENA);
     if (!ptr) {
@@ -524,8 +522,9 @@ static ssize_t heap_grow(size_t size)
     heap_insert_free_chunk(heap_create_free_chunk(ptr, size, true));
 
     /* change the heap start and end variables */
-    if ((uintptr_t)ptr < (uintptr_t)theheap.base || theheap.base == 0)
+    if ((uintptr_t)ptr < (uintptr_t)theheap.base || theheap.base == 0) {
         theheap.base = ptr;
+    }
 
     uintptr_t endptr = (uintptr_t)ptr + size;
     if (endptr > (uintptr_t)theheap.base + theheap.len) {
@@ -535,8 +534,7 @@ static ssize_t heap_grow(size_t size)
     return size;
 }
 
-void miniheap_init(void *ptr, size_t len)
-{
+void miniheap_init(void *ptr, size_t len) {
     LTRACEF("ptr %p, len %zu\n", ptr, len);
 
     // create a mutex
@@ -552,7 +550,8 @@ void miniheap_init(void *ptr, size_t len)
     theheap.low_watermark = 0;
 
     // if passed a default range, use it
-    if (len > 0)
+    if (len > 0) {
         heap_insert_free_chunk(heap_create_free_chunk(ptr, len, true));
+    }
 }
 

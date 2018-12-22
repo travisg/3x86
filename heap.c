@@ -33,72 +33,70 @@
 
 static uint32_t default_heap[16384/sizeof(uint32_t)];
 
-void heap_init(void)
-{
+void heap_init(void) {
     miniheap_init(default_heap, sizeof(default_heap));
 }
 
-void heap_trim(void)
-{
+void heap_trim(void) {
     miniheap_trim();
 }
 
-void *malloc(size_t size)
-{
+void *malloc(size_t size) {
     LTRACEF("size %zd\n", size);
 
     void *ptr = miniheap_alloc(size, 0);
-    if (HEAP_TRACE)
+    if (HEAP_TRACE) {
         printf("caller %p malloc %zu -> %p\n", __GET_CALLER(), size, ptr);
+    }
     return ptr;
 }
 
-void *memalign(size_t boundary, size_t size)
-{
+void *memalign(size_t boundary, size_t size) {
     LTRACEF("boundary %zu, size %zd\n", boundary, size);
 
     void *ptr = miniheap_alloc(size, boundary);
-    if (HEAP_TRACE)
+    if (HEAP_TRACE) {
         printf("caller %p memalign %zu, %zu -> %p\n", __GET_CALLER(), boundary, size, ptr);
+    }
     return ptr;
 }
 
-void *calloc(size_t count, size_t size)
-{
+void *calloc(size_t count, size_t size) {
     LTRACEF("count %zu, size %zd\n", count, size);
 
     size_t realsize = count * size;
 
     void *ptr = miniheap_alloc(realsize, 0);
-    if (likely(ptr))
+    if (likely(ptr)) {
         memset(ptr, 0, realsize);
+    }
 
-    if (HEAP_TRACE)
+    if (HEAP_TRACE) {
         printf("caller %p calloc %zu, %zu -> %p\n", __GET_CALLER(), count, size, ptr);
+    }
     return ptr;
 }
 
-void *realloc(void *ptr, size_t size)
-{
+void *realloc(void *ptr, size_t size) {
     LTRACEF("ptr %p, size %zd\n", ptr, size);
 
     void *ptr2 = miniheap_realloc(ptr, size);
-    if (HEAP_TRACE)
+    if (HEAP_TRACE) {
         printf("caller %p realloc %p, %zu -> %p\n", __GET_CALLER(), ptr, size, ptr2);
+    }
     return ptr2;
 }
 
-void free(void *ptr)
-{
+void free(void *ptr) {
     LTRACEF("ptr %p\n", ptr);
-    if (HEAP_TRACE)
+    if (HEAP_TRACE) {
         printf("caller %p free %p\n", __GET_CALLER(), ptr);
+    }
 
     miniheap_free(ptr);
 }
 
-void heap_dump(void)
-{
+void heap_dump(void) {
     miniheap_dump();
 }
 
