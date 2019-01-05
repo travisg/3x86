@@ -97,6 +97,7 @@ void x86_init(void) {
         "mov  %0, %%es;"
         "mov  %0, %%fs;"
         "mov  %0, %%gs;"
+        "mov  %0, %%ss;"
         :: "r"(DATA_SELECTOR)
         : "memory");
 
