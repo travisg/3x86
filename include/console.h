@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Travis Geiselbrecht
+ * Copyright (c) 2019 Travis Geiselbrecht
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files
@@ -25,7 +25,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-void console_init(bool clear);
+void console_init(void);
 
 // write at most len chars or until end of string to the console
 // return number of characters written

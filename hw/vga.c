@@ -20,10 +20,15 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <hw/console.h>
+#include <hw/vga.h>
 
+#include <ctype.h>
+#include <console.h>
 #include <string.h>
 #include <stdlib.h>
+#include <x86/x86.h>
+
+// mini driver for vga text mode console
 
 static unsigned short *vga = (void *)0xb8000;
 static unsigned col = 0;
@@ -32,7 +37,11 @@ static unsigned line = 0;
 #define SCREEN_WIDTH 80
 #define SCREEN_HEIGHT 25
 
-void console_init(bool clear) {
+void vga_console_init(bool clear) {
+    // disable the cursor
+    outp(0x3d4, 0x0a);
+    outp(0x3d5, 0x20);
+
     if (clear) {
         for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
             vga[i] = 0x720;
@@ -42,14 +51,14 @@ void console_init(bool clear) {
 
 // scroll the screen by copying line 1-24 to line 0-23
 // and then clearing the last line
-static void console_scrup(void) {
+static void vga_console_scrup(void) {
     memcpy(vga, vga + SCREEN_WIDTH, (SCREEN_HEIGHT - 1) * SCREEN_WIDTH * 2);
     for (int i = 0; i < SCREEN_WIDTH; i++) {
         vga[(SCREEN_HEIGHT - 1) * SCREEN_WIDTH + i] = 0x720;
     }
 }
 
-static void console_putchar(char c) {
+void vga_console_putchar(char c) {
     switch (c) {
         case '\n':
             line++;
@@ -61,8 +70,10 @@ static void console_putchar(char c) {
             col = ROUNDUP(col + 1, 4);
             break;
         default:
-            vga[line * SCREEN_WIDTH + col] = 0xf00 | (c & 0x7f);
-            col++;
+            if (isprint(c)) {
+                vga[line * SCREEN_WIDTH + col] = 0xf00 | (c & 0x7f);
+                col++;
+            }
     }
 
     if (col >= SCREEN_WIDTH) {
@@ -70,21 +81,7 @@ static void console_putchar(char c) {
         line++;
     }
     if (line == SCREEN_HEIGHT) {
-        console_scrup();
+        vga_console_scrup();
         line--;
     }
 }
-
-int console_write(const char *str, size_t len, bool crlf) {
-    size_t i;
-    for (i = 0; *str && i < len; i++) {
-        char c = *str++;
-        if (crlf && c == '\n') {
-            console_putchar('\r');
-        }
-        console_putchar(c);
-    }
-
-    return i;
-}
-

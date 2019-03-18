@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <task.h>
 #include <time.h>
-#include <hw/console.h>
+#include <console.h>
 #include <hw/pic.h>
 #include <hw/pit.h>
 #include <x86/x86.h>
@@ -54,7 +54,9 @@ static void dump_e820(const void *ptr, size_t count) {
 
 // main C entry point
 void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count, int in_vesa, void *vesa_ptr) {
-    console_init(true);
+    // initialize the vga text console
+    console_init();
+
     x86_init();
 
     printf("Welcome to 3x86 OS\n");

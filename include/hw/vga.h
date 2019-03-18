@@ -20,21 +20,11 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <stdio.h>
+#pragma once
 
-#include <limits.h>
-#include <string.h>
-#include <console.h>
+#include <stddef.h>
+#include <stdbool.h>
 
-int putchar(int _c) {
-    char c = _c;
-    console_write(&c, 1, true);
-    return c;
-}
-
-int puts(const char *c) {
-    console_write(c, (size_t)-1, true);
-    putchar('\n');
-    return 0;
-}
+void vga_console_init(bool clear);
+void vga_console_putchar(char c);
 

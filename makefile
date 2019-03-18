@@ -26,6 +26,7 @@ BOOT_OBJS := bootblock.o
 BOOTBLOCK := $(BUILD_DIR)/bootblock
 
 KERNEL_OBJS := \
+	console.o \
 	ctype.o \
 	debug.o \
 	heap.o \
@@ -37,7 +38,7 @@ KERNEL_OBJS := \
 	string.o \
 	task.o \
 \
-	hw/console.o \
+	hw/vga.o \
 	hw/pic.o \
 	hw/pit.o \
 \
@@ -67,7 +68,7 @@ clean:
 
 .PHONY: qemu
 qemu: all
-	qemu-system-i386 --monitor stdio --machine isapc --cpu 486 -m 4 -fda $(IMAGE) -no-shutdown
+	qemu-system-i386 --monitor stdio --machine pc --cpu 486 -m 4 -drive if=floppy,format=raw,file=$(IMAGE) -no-shutdown
 
 .PHONY: format
 format:

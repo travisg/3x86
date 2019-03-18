@@ -25,7 +25,7 @@
 #include <compiler.h>
 #include <stdarg.h>
 #include <string.h>
-#include <hw/console.h>
+#include <console.h>
 #include <sys/types.h>
 
 #define WITH_NO_FP 1
