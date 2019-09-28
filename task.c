@@ -45,7 +45,7 @@ void task_become_idle(void) {
     task_reschedule();
 
     // drop into idle loop
-    x86_sti();
+    exit_critical_section();
     for (;;) {
         x86_hlt();
     }
@@ -65,7 +65,7 @@ void task_init(void) {
 // initial routine run by every new task
 static void task_trampoline(void) {
     // reenable interrupts, since they were implicitly disabled by the reschedule routine
-    x86_sti();
+    exit_critical_section();
 
     LTRACEF("top of task %p\n", current_task);
 
@@ -79,7 +79,7 @@ static void task_trampoline(void) {
 void task_exit(void) {
     LTRACEF("exiting task %p\n", current_task);
 
-    x86_cli();
+    enter_critical_section();
 
     // set ourselves to the DEAD state and reschedule
     // the scheduler wont put us back in the run queue
@@ -92,8 +92,10 @@ void task_exit(void) {
 
 status_t task_create(task_t *t, const char *name, void (*entry)(void *), void *arg, uintptr_t stack, size_t stack_size) {
     // initialize the sructure
+    *t = (task_t) { 0 };
     list_clear_node(&t->node);
     t->state = INITIAL;
+    t->critical_section_count = 1; // start off inside a critical section
     t->entry = entry;
     t->arg = arg;
     t->stack = stack;
@@ -110,24 +112,24 @@ status_t task_create(task_t *t, const char *name, void (*entry)(void *), void *a
 
 // move the task from the initial state and put it in the run queue
 status_t task_start(task_t *t) {
-    x86_flags_t flags = x86_irq_disable();
+    enter_critical_section();
 
     if (t->state != INITIAL) {
-        x86_irq_restore(flags);
+        exit_critical_section();
         return -1;
     }
 
     t->state = READY;
     list_add_head(&run_queue, &t->node);
 
-    x86_irq_restore(flags);
+    exit_critical_section();
 
     return 0;
 }
 
 // see if a new task is ready to run
 void task_reschedule(void) {
-    x86_flags_t flags = x86_irq_disable();
+    enter_critical_section();
 
     task_t *old_task = current_task;
     task_t *next_task;
@@ -145,15 +147,27 @@ void task_reschedule(void) {
         next_task = &idle_task;
     }
 
-    if (next_task == old_task) {
-        goto out;
-    }
-
+    // mark the new task as running, even if it was the old one
     current_task = next_task;
     current_task->state = RUNNING;
-    x86_task_switch(old_task, next_task);
 
-out:
-    x86_irq_restore(flags);
+    // if the new task is actually different, do a low level stack swap
+    if (next_task != old_task) {
+        x86_task_switch(old_task, next_task);
+    }
+
+    exit_critical_section();
+}
+
+void enter_critical_section(void) {
+    if (++current_task->critical_section_count == 1) {
+        x86_cli();
+    }
+}
+
+void exit_critical_section(void) {
+    if (--current_task->critical_section_count == 0) {
+        x86_sti();
+    }
 }
 

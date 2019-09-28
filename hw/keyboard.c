@@ -25,6 +25,7 @@
 
 #include <console.h>
 #include <stdio.h>
+#include <task.h>
 #include <time.h>
 #include <trace.h>
 #include <hw/pc.h>
@@ -87,6 +88,7 @@ static inline void i8042_write_command(int val) {
     outp(I8042_COMMAND_REG, val);
 }
 
+// TODO: replace with a spin based system
 static inline void delay(uint32_t delay) {
     uint32_t start = current_time();
 
@@ -115,7 +117,7 @@ static int i8042_flush(void) {
     unsigned char data __UNUSED;
     int i = 0;
 
-    //enter_critical_section();
+    enter_critical_section();
 
     while ((i8042_read_status() & I8042_STR_OBF) && (i++ < I8042_BUFFER_LENGTH)) {
         printf("i8042_flush %d\n", i);
@@ -123,7 +125,7 @@ static int i8042_flush(void) {
         data = i8042_read_data();
     }
 
-    //exit_critical_section();
+    exit_critical_section();
 
     return i;
 }
@@ -131,7 +133,7 @@ static int i8042_flush(void) {
 static int i8042_command(uint8_t *param, int command) {
     int retval = 0, i = 0;
 
-    //enter_critical_section();
+    enter_critical_section();
     //TRACEF("param %p, command %#x\n", param, command);
 
     retval = i8042_wait_write();
@@ -163,7 +165,7 @@ static int i8042_command(uint8_t *param, int command) {
         }
     }
 
-    //exit_critical_section();
+    exit_critical_section();
 
     return retval;
 }

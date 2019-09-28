@@ -36,6 +36,8 @@ typedef struct task {
         DEAD
     } state;
 
+    int critical_section_count;
+
     void (*entry)(void *);
     void *arg;
 
@@ -52,4 +54,8 @@ status_t task_create(task_t *t, const char *name, void (*entry)(void *), void *a
 status_t task_start(task_t *t);
 void task_exit(void) __NO_RETURN;
 void task_reschedule(void);
+
+// manipulate a counter per task that disable/enables irqs
+void enter_critical_section(void);
+void exit_critical_section(void);
 
