@@ -31,3 +31,6 @@ void console_init(void);
 // return number of characters written
 int console_write(const char *str, size_t len, bool crlf);
 
+// input from the the user via an input device
+void console_input(char c);
+

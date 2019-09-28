@@ -28,6 +28,7 @@
 #include <task.h>
 #include <time.h>
 #include <console.h>
+#include <hw/keyboard.h>
 #include <hw/pic.h>
 #include <hw/pit.h>
 #include <x86/x86.h>
@@ -89,7 +90,9 @@ void _start_c(unsigned int mem, struct e820 *ext_mem_block, size_t ext_mem_count
 void main2(void *arg) {
     printf("top of secondary boot thread\n");
 
-    // TODO: initialize additional drivers and subsystems here
+    // initialize additional drivers and subsystems here
+    keyboard_init();
+
     heap_dump();
 
     printf("secondary boot thread exiting\n");

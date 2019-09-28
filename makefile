@@ -38,9 +38,10 @@ KERNEL_OBJS := \
 	string.o \
 	task.o \
 \
-	hw/vga.o \
+	hw/keyboard.o \
 	hw/pic.o \
 	hw/pit.o \
+	hw/vga.o \
 \
 	x86/exceptions.o \
 	x86/task.o \

@@ -23,6 +23,7 @@
 #include <hw/pic.h>
 
 #include <stdio.h>
+#include <hw/keyboard.h>
 #include <hw/pc.h>
 #include <hw/pit.h>
 #include <x86/x86.h>
@@ -126,6 +127,9 @@ void pic_irq(unsigned int vector) {
     switch (vector) {
         case IRQ_PIT:
             pit_irq();
+            break;
+        case IRQ_KEYBOARD:
+            keyboard_irq();
             break;
         default:
             printf("unhandled PIC interrupt\n");
