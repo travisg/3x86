@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
     if ((st.st_size % 512) != 0) {
         blocks++;
     }
-    printf("size %llu, blocks %d (size %d)\n", (unsigned long long)st.st_size, blocks, blocks * 512);
+    printf("makeflop: size %zu, blocks %d (size %d)\n", st.st_size, blocks, blocks * 512);
     bootsector[2] = (blocks & 0x00ff);
     bootsector[3] = (blocks & 0xff00) >> 8;
 
@@ -156,9 +156,8 @@ int main(int argc, char *argv[]) {
     if (padding) {
         if (written_bytes % padding) {
             size_t towrite = padding - written_bytes % padding;
-            unsigned char *buf = malloc(towrite);
+            unsigned char *buf = calloc(1, towrite);
 
-            memset(buf, 0, towrite);
             ssize_t written = write(outfd, buf, towrite);
             if (written != towrite) {
                 fprintf(stderr, "error writing to output file\n");
@@ -167,6 +166,7 @@ int main(int argc, char *argv[]) {
             written_bytes += written;
 
             printf("output file padded to %zu\n", written_bytes);
+            free(buf);
         }
     }
 

@@ -50,6 +50,7 @@ KERNEL_OBJS := \
 
 KERNEL := $(BUILD_DIR)/kernel
 IMAGE := $(BUILD_DIR)/image
+IMAGE_PADDED := $(BUILD_DIR)/image.padded
 
 MAKEFLOP := $(BUILD_DIR)/makeflop
 
@@ -57,10 +58,10 @@ BOOT_OBJS := $(addprefix $(BUILD_DIR)/,$(BOOT_OBJS))
 KERNEL_OBJS := $(addprefix $(BUILD_DIR)/,$(KERNEL_OBJS))
 
 # makes sure the target dir exists
-MKDIR = if [ ! -d $(dir $@) ]; then mkdir -p $(dir $@); fi
+MKDIR = mkdir -p $(dir $@)
 
 .PHONY: all
-all: $(IMAGE) $(BOOTBLOCK).lst $(KERNEL).lst
+all: $(IMAGE) $(IMAGE_PADDED) $(BOOTBLOCK).lst $(KERNEL).lst
 
 .PHONY: clean
 clean:
@@ -68,7 +69,7 @@ clean:
 
 .PHONY: qemu
 qemu: all
-	qemu-system-i386 --monitor stdio --machine pc --cpu 486 -m 4 -drive if=floppy,format=raw,file=$(IMAGE) -no-shutdown
+	qemu-system-i386 --monitor stdio --machine pc --cpu 486 -m 4 -drive if=floppy,format=raw,file=$(IMAGE_PADDED) -no-shutdown
 
 .PHONY: format
 format:
@@ -83,7 +84,11 @@ disk: $(IMAGE)
 
 $(IMAGE): $(BOOTBLOCK).bin $(KERNEL).bin $(MAKEFLOP) makefile
 	@$(MKDIR)
-	$(MAKEFLOP) $(BOOTBLOCK).bin $(KERNEL).bin $@
+	$(MAKEFLOP) -p 512 $(BOOTBLOCK).bin $(KERNEL).bin $@
+
+$(IMAGE_PADDED): $(BOOTBLOCK).bin $(KERNEL).bin $(MAKEFLOP) makefile
+	@$(MKDIR)
+	$(MAKEFLOP) -p $$((80 * 18 * 2 * 512)) $(BOOTBLOCK).bin $(KERNEL).bin $@
 
 $(BOOTBLOCK): $(BOOT_OBJS) bootblock.ld makefile
 	@$(MKDIR)
