@@ -216,10 +216,7 @@ shorten:
     mov     %bx, %cx            //   -> sector/cylinder # to read from
     mov     $0x8000, %bx        // buffer address
     mov     $0x2, %ah           // command 'read sectors'
-    push    %ax
     int     $0x13               //   call BIOS
-    pop     %ax                 // TK: should return number of transferred sectors in al
-                                // but VMWare 3 clobbers it, so we (re-)load al manually
     jnc     okok                //   no error -> proceed as usual
     decb    retrycnt
     jz      fail
