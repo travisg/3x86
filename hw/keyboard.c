@@ -88,11 +88,11 @@ static inline void i8042_write_command(int val) {
     outp(I8042_COMMAND_REG, val);
 }
 
-// TODO: replace with a spin based system
 static inline void delay(uint32_t delay) {
-    uint32_t start = current_time();
-
-    while (start + delay > current_time());
+    // TODO: calibrate this to use some sort of realistic delay
+    for (uint32_t i = 0; i < delay * 10000; i++) {
+        asm volatile("nop");
+    }
 }
 
 static int i8042_wait_read(void) {
